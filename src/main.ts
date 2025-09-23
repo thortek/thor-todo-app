@@ -5,7 +5,9 @@ import {
   createTodo,
   deleteCategory,
   deleteTodo,
-  getAllCategories
+  getAllCategories,
+  getAllTodos,
+  editTodo
 } from "./todoModel"
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
@@ -20,6 +22,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
    <select id="categoriesDropdown">
      <option value="" disabled selected>Select a category</option>
    </select>
+   <div>
+   <button type="button" id="editTodo">Edit a Todo item</button>
+   </div>
 
   </div>
 `
@@ -58,6 +63,19 @@ document.querySelector<HTMLButtonElement>("#deleteTodo")!.onclick = () => {
   if (todoId) {
     const success = deleteTodo(todoId)
     alert(success ? `Todo with ID ${todoId} deleted.` : `Todo with ID ${todoId} not found.`)
+  }
+}
+
+document.querySelector<HTMLButtonElement>("#editTodo")!.onclick = () => {
+  const allToDos = getAllTodos();
+  for (const todo of allToDos) {
+    console.log(`Todo ID: ${todo.id}, Name: ${todo.name}, Status: ${todo.status}, Category ID: ${todo.categoryId}, Due Date: ${todo.dueDate}`);
+  }
+  const todoId = prompt("Enter todo ID to edit:")
+  if (todoId) {
+    const editedTodo = editTodo(todoId, { name: "Updated Todo Name", status: "in-progress" })
+    console.log(editedTodo);
+    alert(editedTodo ? `Todo with ID ${todoId} and name ${editedTodo.name} has been edited with a status of ${editedTodo.status}.` : `Todo with ID ${todoId} not found.`)
   }
 }
 
