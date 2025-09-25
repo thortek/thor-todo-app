@@ -11,8 +11,8 @@ import {
 } from "./todoModel"
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-  <div>
-   <h1>Welcome to my Todo App</h1>
+  <div class="bg-blue-50 m-8 h-dvh p-4 rounded-lg">
+   <h1 class="bg-blue-100">Welcome to my Todo App</h1>
 
    <button type="button" id="addCategory">Add a Category</button>
    <button type="button" id="addTodo">Add a Todo item</button>
