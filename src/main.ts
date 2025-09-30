@@ -3,9 +3,17 @@ import "./style.css"
 import {
   addCategory,
   createTodo,
+  deleteCategory,
   getAllCategories,
+  getAllTodos,
 } from "./todoModel"
 import { initTodoViewer, renderTodoList } from "./todoViewer"
+import {
+  showAlertModal,
+  showConfirmModal,
+  showFormModal,
+  setupModalHost,
+} from "./modalService"
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 function initApp(): void {
+  setupModalHost()
   // Set up the main UI
   setupUI()
 
@@ -75,77 +84,229 @@ function setupUI(): void {
 
 function setupEventListeners(): void {
   // Add Category
-  document.querySelector<HTMLButtonElement>("#addCategory")!.onclick = () => {
-    const categoryName = prompt("Enter category name:")
-    if (categoryName?.trim()) {
-      const newCategory = addCategory(categoryName.trim())
-      updateCategoriesDropdown()
-      alert(`Category "${newCategory.name}" added successfully!`)
+  const addCategoryButton = document.querySelector<HTMLButtonElement>('#addCategory')
+  if (addCategoryButton) {
+    addCategoryButton.onclick = async () => {
+      try {
+        const result = await showFormModal({
+          title: 'Add category',
+          message: 'Organize your tasks by grouping them into categories.',
+          confirmLabel: 'Create category',
+          fields: [
+            {
+              name: 'categoryName',
+              label: 'Category name',
+              type: 'text',
+              placeholder: 'e.g. School',
+              required: true
+            }
+          ]
+        })
+
+        if (!result) return
+
+        const categoryName = result.categoryName.trim()
+        if (!categoryName) {
+          await showAlertModal({
+            title: 'Category name required',
+            message: 'Please provide a category name before saving.'
+          })
+          return
+        }
+
+        const newCategory = addCategory(categoryName)
+        updateCategoriesDropdown()
+
+        await showAlertModal({
+          title: 'Category added',
+          message: `Category "${newCategory.name}" added successfully!`
+        })
+      } catch (error) {
+        console.error('Error adding category:', error)
+        await showAlertModal({
+          title: 'Error',
+          message: 'There was an error adding the category. Please try again.'
+        })
+      }
     }
   }
 
   // Add Todo
-  document.querySelector<HTMLButtonElement>("#addTodo")!.onclick = () => {
-    const todoName = prompt("Enter todo name:")
-    if (!todoName?.trim()) return
-
-    const categories = getAllCategories()
-    if (categories.length === 0) {
-      alert("Please add a category first!")
-      return
-    }
-
-    // Use the first category as default, or let user choose
-    const defaultCategory = categories[0]
-    const dueDateInput = prompt("Enter due date (YYYY-MM-DD):", new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-
-    if (dueDateInput) {
-      try {
-        const dueDate = new Date(dueDateInput)
-        const newTodo = createTodo({
-          name: todoName.trim(),
-          status: "pending",
-          categoryId: defaultCategory.id,
-          dueDate
+  const addTodoButton = document.querySelector<HTMLButtonElement>('#addTodo')
+  if (addTodoButton) {
+    addTodoButton.onclick = async () => {
+      const categories = getAllCategories()
+      if (categories.length === 0) {
+        await showAlertModal({
+          title: 'Add a category first',
+          message: 'Create a category before adding your first todo.'
         })
-        renderTodoList() // Refresh the todo list
-        alert(`Todo "${newTodo.name}" added successfully!`)
-      } catch (error) {
-        alert("Invalid date format. Please use YYYY-MM-DD format.")
+        return
       }
+
+      const defaultDueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0]
+
+      const result = await showFormModal({
+        title: 'Add todo',
+        message: 'Create a new todo and assign it to a category.',
+        confirmLabel: 'Create todo',
+        fields: [
+          {
+            name: 'name',
+            label: 'Todo name',
+            type: 'text',
+            placeholder: 'e.g. Finish homework',
+            required: true
+          },
+          {
+            name: 'categoryId',
+            label: 'Category',
+            type: 'select',
+            required: true,
+            options: categories.map(category => ({
+              label: category.name,
+              value: category.id
+            })),
+            initialValue: categories[0]?.id
+          },
+          {
+            name: 'dueDate',
+            label: 'Due date',
+            type: 'date',
+            required: true,
+            initialValue: defaultDueDate
+          }
+        ]
+      })
+
+      if (!result) return
+
+      const name = result.name?.trim()
+      if (!name) {
+        await showAlertModal({
+          title: 'Todo name required',
+          message: 'Please provide a name for your todo.'
+        })
+        return
+      }
+
+      const dueDate = new Date(result.dueDate)
+      if (Number.isNaN(dueDate.getTime())) {
+        await showAlertModal({
+          title: 'Invalid due date',
+          message: 'Please select a valid due date.'
+        })
+        return
+      }
+
+      const newTodo = createTodo({
+        name,
+        status: 'pending',
+        categoryId: result.categoryId,
+        dueDate
+      })
+      renderTodoList()
+      updateCategoriesDropdown()
+
+      await showAlertModal({
+        title: 'Todo added',
+        message: `Todo "${newTodo.name}" added successfully!`
+      })
     }
   }
 
   // Delete Category
-  document.querySelector<HTMLButtonElement>("#deleteCategory")!.onclick = () => {
-    const categories = getAllCategories()
-    if (categories.length === 0) {
-      alert("No categories to delete!")
-      return
-    }
+  const deleteCategoryButton = document.querySelector<HTMLButtonElement>('#deleteCategory')
+  if (deleteCategoryButton) {
+    deleteCategoryButton.onclick = async () => {
+      const categories = getAllCategories()
+      if (categories.length === 0) {
+        await showAlertModal({
+          title: 'No categories to delete',
+          message: 'Add a category before trying to delete one.'
+        })
+        return
+      }
 
-    const categoryNames = categories.map(cat => cat.name).join(', ')
-    const categoryName = prompt(`Enter category name to delete:\nAvailable: ${categoryNames}`)
+      const selection = await showFormModal({
+        title: 'Delete category',
+        message: 'Select the category you want to remove.',
+        confirmLabel: 'Continue',
+        cancelLabel: 'Back',
+        fields: [
+          {
+            name: 'categoryId',
+            label: 'Category',
+            type: 'select',
+            required: true,
+            options: categories.map(category => ({
+              label: category.name,
+              value: category.id
+            })),
+            initialValue: categories[0]?.id
+          }
+        ]
+      })
 
-    if (categoryName?.trim()) {
-      const category = categories.find(cat => cat.name.toLowerCase() === categoryName.trim().toLowerCase())
-      if (category) {
-        const success = confirm(`Are you sure you want to delete category "${category.name}"?`)
-        if (success) {
-          // Note: We should check if category has todos before deleting
-          // For now, we'll just delete it
-          // In a real app, you'd want to handle this better
-          alert("Category deletion not implemented in this demo")
-        }
+      if (!selection) return
+
+      const category = categories.find(cat => cat.id === selection.categoryId)
+      if (!category) {
+        await showAlertModal({
+          title: 'Category not found',
+          message: 'The selected category could not be found.'
+        })
+        updateCategoriesDropdown()
+        return
+      }
+
+      const todos = getAllTodos()
+      const hasTodos = todos.some(todo => todo.categoryId === category.id)
+      if (hasTodos) {
+        await showAlertModal({
+          title: 'Cannot delete category',
+          message: `Reassign or delete todos in "${category.name}" before removing this category.`
+        })
+        return
+      }
+
+      const confirmed = await showConfirmModal({
+        title: 'Delete category',
+        message: `This action cannot be undone. Delete "${category.name}"?`,
+        confirmLabel: 'Delete',
+        cancelLabel: 'Cancel',
+        variant: 'danger',
+        dismissible: false
+      })
+
+      if (!confirmed) return
+
+      const removed = deleteCategory(category.id)
+      if (removed) {
+        updateCategoriesDropdown()
+        await showAlertModal({
+          title: 'Category deleted',
+          message: `Category "${category.name}" has been deleted.`
+        })
       } else {
-        alert("Category not found!")
+        await showAlertModal({
+          title: 'Category not found',
+          message: 'The category was already removed.'
+        })
       }
     }
   }
 
-  // Delete Todo (using prompt for ID - in real app, this would be handled by the todo viewer)
-  document.querySelector<HTMLButtonElement>("#deleteTodo")!.onclick = () => {
-    alert("Use the Delete button on individual todos in the list below!")
+  const deleteTodoButton = document.querySelector<HTMLButtonElement>('#deleteTodo')
+  if (deleteTodoButton) {
+    deleteTodoButton.onclick = async () => {
+      await showAlertModal({
+        title: 'Tip',
+        message: 'Use the Delete button on individual todos in the list below.'
+      })
+    }
   }
 
   // Initialize categories dropdown

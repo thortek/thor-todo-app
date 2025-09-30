@@ -1,5 +1,6 @@
 import type { Todo } from './todoModel'
 import { getAllTodos, getAllCategories, deleteTodo, editTodo } from './todoModel'
+import { showAlertModal, showConfirmModal, showFormModal } from './modalService'
 
 /**
  * Formats a date for display
@@ -91,8 +92,12 @@ function createTodoElement(todo: Todo): HTMLElement {
   const editBtn = todoDiv.querySelector('.edit-btn') as HTMLButtonElement
   const deleteBtn = todoDiv.querySelector('.delete-btn') as HTMLButtonElement
 
-  editBtn.addEventListener('click', () => handleEditTodo(todo.id))
-  deleteBtn.addEventListener('click', () => handleDeleteTodo(todo.id))
+  editBtn.addEventListener('click', () => {
+    void handleEditTodo(todo.id)
+  })
+  deleteBtn.addEventListener('click', () => {
+    void handleDeleteTodo(todo.id)
+  })
 
   return todoDiv
 }
@@ -100,37 +105,152 @@ function createTodoElement(todo: Todo): HTMLElement {
 /**
  * Handles editing a todo item
  */
-function handleEditTodo(todoId: string): void {
+async function handleEditTodo(todoId: string): Promise<void> {
   const todos = getAllTodos()
   const todo = todos.find(t => t.id === todoId)
 
   if (!todo) {
-    alert('Todo not found')
+    await showAlertModal({
+      title: 'Todo not found',
+      message: 'The selected todo could not be located. It may have already been removed.'
+    })
     return
   }
 
-  // Simple edit dialog - in a real app, you'd want a proper modal
-  const newName = prompt('Enter new name:', todo.name)
-  if (newName && newName.trim()) {
-    const newStatus = prompt('Enter new status (pending/in-progress/completed):', todo.status) as Todo['status']
-    if (newStatus && ['pending', 'in-progress', 'completed'].includes(newStatus)) {
-      editTodo(todoId, { name: newName.trim(), status: newStatus })
-      renderTodoList() // Re-render the list
-    }
+  const categories = getAllCategories()
+  if (categories.length === 0) {
+    await showAlertModal({
+      title: 'No categories available',
+      message: 'Add a category before editing todos.'
+    })
+    return
   }
+
+  const formValues = await showFormModal({
+    title: 'Edit todo',
+    message: 'Update the details of your todo.',
+    confirmLabel: 'Save changes',
+    fields: [
+      {
+        name: 'name',
+        label: 'Todo name',
+        type: 'text',
+        required: true,
+        initialValue: todo.name
+      },
+      {
+        name: 'status',
+        label: 'Status',
+        type: 'select',
+        required: true,
+        options: [
+          { label: 'Pending', value: 'pending' },
+          { label: 'In progress', value: 'in-progress' },
+          { label: 'Completed', value: 'completed' }
+        ],
+        initialValue: todo.status
+      },
+      {
+        name: 'categoryId',
+        label: 'Category',
+        type: 'select',
+        required: true,
+        options: categories.map(category => ({
+          label: category.name,
+          value: category.id
+        })),
+        initialValue: todo.categoryId
+      },
+      {
+        name: 'dueDate',
+        label: 'Due date',
+        type: 'date',
+        required: true,
+        initialValue: todo.dueDate.toISOString().split('T')[0]
+      }
+    ]
+  })
+
+  if (!formValues) return
+
+  const name = formValues.name.trim()
+  if (!name) {
+    await showAlertModal({
+      title: 'Todo name required',
+      message: 'Please provide a name before saving your changes.'
+    })
+    return
+  }
+
+  const status = formValues.status as Todo['status']
+  if (!['pending', 'in-progress', 'completed'].includes(status)) {
+    await showAlertModal({
+      title: 'Invalid status',
+      message: 'Choose a valid status for this todo.'
+    })
+    return
+  }
+
+  const dueDate = new Date(formValues.dueDate)
+  if (Number.isNaN(dueDate.getTime())) {
+    await showAlertModal({
+      title: 'Invalid due date',
+      message: 'Please select a valid due date.'
+    })
+    return
+  }
+
+  editTodo(todoId, {
+    name,
+    status,
+    categoryId: formValues.categoryId,
+    dueDate
+  })
+  renderTodoList()
+
+  await showAlertModal({
+    title: 'Todo updated',
+    message: `Todo "${name}" was updated successfully.`
+  })
 }
 
 /**
  * Handles deleting a todo item
  */
-function handleDeleteTodo(todoId: string): void {
-  if (confirm('Are you sure you want to delete this todo?')) {
-    const success = deleteTodo(todoId)
-    if (success) {
-      renderTodoList() // Re-render the list
-    } else {
-      alert('Todo not found')
-    }
+async function handleDeleteTodo(todoId: string): Promise<void> {
+  const todos = getAllTodos()
+  const todo = todos.find(t => t.id === todoId)
+
+  if (!todo) {
+    await showAlertModal({
+      title: 'Todo not found',
+      message: 'The todo you tried to delete was not found.'
+    })
+    return
+  }
+
+  const confirmed = await showConfirmModal({
+    title: 'Delete todo',
+    message: `Are you sure you want to delete "${todo.name}"?`,
+    confirmLabel: 'Delete',
+    cancelLabel: 'Cancel',
+    variant: 'danger'
+  })
+
+  if (!confirmed) return
+
+  const success = deleteTodo(todoId)
+  if (success) {
+    renderTodoList()
+    await showAlertModal({
+      title: 'Todo deleted',
+      message: `Todo "${todo.name}" was deleted.`
+    })
+  } else {
+    await showAlertModal({
+      title: 'Todo not found',
+      message: 'The todo could not be deleted because it no longer exists.'
+    })
   }
 }
 
