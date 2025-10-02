@@ -302,8 +302,8 @@ function openModal(options: BaseModalOptions & Partial<FormModalOptions>): Promi
       const previousActiveElement = document.activeElement as HTMLElement | null
 
       const overlay = document.createElement("div")
-      // Modal backdrop with Tailwind classes
-      overlay.className = "fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200"
+      // Modal backdrop with Tailwind classes - using bg-black/50 for 50% opacity
+      overlay.className = "fixed inset-0 z-[999] flex items-center justify-center bg-black/50 transition-opacity duration-200"
 
       const panel = document.createElement("div")
       // Modal panel with Tailwind classes
