@@ -1,5 +1,5 @@
 import type { Todo } from './todoModel'
-import { getAllTodos, getAllCategories, deleteTodo, editTodo } from './todoModel'
+import { getAllTodos, getAllCategories, deleteTodo, editTodo, clearCompletedTodos } from './todoModel'
 import { showAlertModal, showConfirmModal, showFormModal } from './modalService'
 
 /**
@@ -255,6 +255,36 @@ async function handleDeleteTodo(todoId: string): Promise<void> {
 }
 
 /**
+ * Handles clearing all completed todos
+ */
+async function handleClearCompleted(): Promise<void> {
+  const todos = getAllTodos()
+  const completedCount = todos.filter(t => t.status === 'completed').length
+
+  if (completedCount === 0) {
+    return
+  }
+
+  const confirmed = await showConfirmModal({
+    title: 'Clear completed todos',
+    message: `Are you sure you want to remove ${completedCount} completed todo${completedCount > 1 ? 's' : ''}?`,
+    confirmLabel: 'Clear',
+    cancelLabel: 'Cancel',
+    variant: 'danger'
+  })
+
+  if (!confirmed) return
+
+  const deletedCount = clearCompletedTodos()
+  renderTodoList()
+
+  await showAlertModal({
+    title: 'Completed todos cleared',
+    message: `${deletedCount} completed todo${deletedCount > 1 ? 's' : ''} removed successfully.`
+  })
+}
+
+/**
  * Renders the complete todo list
  */
 export function renderTodoList(): void {
@@ -265,6 +295,9 @@ export function renderTodoList(): void {
     console.error('Todo list container not found')
     return
   }
+
+  // Update the header with Clear Completed button
+  updateTodoListHeader()
 
   // Clear existing content
   todoListContainer.innerHTML = ''
@@ -287,6 +320,70 @@ export function renderTodoList(): void {
     const todoElement = createTodoElement(todo)
     todoListContainer.appendChild(todoElement)
   })
+}
+
+/**
+ * Updates the todo list header with the Clear Completed button
+ */
+function updateTodoListHeader(): void {
+  const headerContainer = document.querySelector('.lg\\:col-span-2 .bg-white h2')
+  
+  if (!headerContainer || !headerContainer.parentElement) {
+    return
+  }
+
+  const todos = getAllTodos()
+  const hasCompletedTodos = todos.some(t => t.status === 'completed')
+
+  // Check if button already exists
+  let existingButton = headerContainer.parentElement.querySelector('#clearCompletedBtn') as HTMLButtonElement
+
+  if (hasCompletedTodos) {
+    if (!existingButton) {
+      // Create the button container if it doesn't exist
+      const buttonContainer = document.createElement('div')
+      buttonContainer.className = 'flex items-center justify-between mb-4'
+      
+      // Move the h2 into the container
+      const h2 = headerContainer.parentElement.querySelector('h2')
+      if (h2) {
+        h2.className = 'text-xl font-semibold text-gray-900'
+        buttonContainer.appendChild(h2)
+        
+        // Create the Clear Completed button
+        const clearButton = document.createElement('button')
+        clearButton.id = 'clearCompletedBtn'
+        clearButton.type = 'button'
+        clearButton.className = 'bg-red-500 hover:bg-red-600 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors duration-200'
+        clearButton.textContent = 'Clear Completed'
+        clearButton.addEventListener('click', () => {
+          void handleClearCompleted()
+        })
+        
+        buttonContainer.appendChild(clearButton)
+        
+        // Insert the container before the todo-list div
+        const todoListDiv = document.getElementById('todo-list')
+        if (todoListDiv) {
+          todoListDiv.parentElement?.insertBefore(buttonContainer, todoListDiv)
+        }
+      }
+    }
+  } else {
+    // Remove the button if no completed todos
+    if (existingButton) {
+      const buttonContainer = existingButton.parentElement
+      const h2 = buttonContainer?.querySelector('h2')
+      
+      if (buttonContainer && h2 && buttonContainer.parentElement) {
+        // Move h2 back out of the container
+        buttonContainer.parentElement.insertBefore(h2, buttonContainer)
+        h2.className = 'text-xl font-semibold text-gray-900 mb-4'
+        // Remove the button container
+        buttonContainer.remove()
+      }
+    }
+  }
 }
 
 /**

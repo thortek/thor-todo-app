@@ -346,7 +346,6 @@ function openModal(options: BaseModalOptions & Partial<FormModalOptions>): Promi
           form!.appendChild(fieldEl.wrapper)
           fieldElements.push(fieldEl)
         })
-        panel.appendChild(form)
       }
 
       const footer = document.createElement("div")
@@ -387,7 +386,15 @@ function openModal(options: BaseModalOptions & Partial<FormModalOptions>): Promi
       }
 
       footer.appendChild(confirmButton)
-      panel.appendChild(footer)
+      
+      // If there's a form, append footer to form, then form to panel
+      // Otherwise, append footer directly to panel
+      if (form) {
+        form.appendChild(footer)
+        panel.appendChild(form)
+      } else {
+        panel.appendChild(footer)
+      }
 
       overlay.appendChild(panel)
       mountModal(overlay)

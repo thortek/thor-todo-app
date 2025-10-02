@@ -24,6 +24,42 @@ const store = {
   categories: [] as Category[],
 }
 
+// Initialize with seed data
+function initializeSeedData(): void {
+  // Only initialize if the store is empty
+  if (store.categories.length === 0 && store.todos.length === 0) {
+    // Create the School category
+    const schoolCategory = addCategory('School')
+    
+    // Create the three todo items
+    createTodo({
+      name: 'Mow the Lawn',
+      status: 'pending',
+      categoryId: schoolCategory.id,
+      dueDate: new Date('2025-10-10')
+    })
+    
+    createTodo({
+      name: 'Finish my homework',
+      status: 'in-progress',
+      categoryId: schoolCategory.id,
+      dueDate: new Date('2025-10-08')
+    })
+    
+    createTodo({
+      name: 'Watch the October 2, 2025 class session video',
+      status: 'completed',
+      categoryId: schoolCategory.id,
+      dueDate: new Date('2025-10-03')
+    })
+    
+    console.log('Seed data initialized with School category and 3 todos')
+  }
+}
+
+// Initialize seed data when the module loads
+initializeSeedData()
+
 function generateId(): string {
   // Get current time to ensure uniqueness
   const now = Date.now()
@@ -123,4 +159,16 @@ export function getAllCategories(): Category[] {
 
 export function getAllTodos(): Todo[] {
   return [...store.todos] // Return a copy
+}
+
+export function clearCompletedTodos(): number {
+  const originalLength = store.todos.length
+  // Filter out all completed todos
+  store.todos = store.todos.filter((todo) => todo.status !== 'completed')
+  const deletedCount = originalLength - store.todos.length
+  console.log(
+    `Cleared ${deletedCount} completed todos. Remaining todos:`,
+    store.todos
+  )
+  return deletedCount // Return the number of todos cleared
 }
