@@ -16,8 +16,8 @@ function formatDate(date: Date): string {
 /**
  * Gets the category name for a given category ID
  */
-function getCategoryName(categoryId: string): string {
-  const categories = getAllCategories()
+async function getCategoryName(categoryId: string): Promise<string> {
+  const categories = await getAllCategories()
   const category = categories.find(cat => cat.id === categoryId)
   return category ? category.name : 'Unknown Category'
 }
@@ -41,13 +41,15 @@ function getStatusClasses(status: Todo['status']): string {
 /**
  * Creates HTML for a single todo item
  */
-function createTodoElement(todo: Todo): HTMLElement {
+async function createTodoElement(todo: Todo): Promise<HTMLElement> {
   const todoDiv = document.createElement('div')
   todoDiv.className = 'bg-white rounded-lg shadow-md border border-gray-200 p-4 mb-3 hover:shadow-lg transition-shadow duration-200'
   todoDiv.setAttribute('data-todo-id', todo.id)
 
-  const categoryName = getCategoryName(todo.categoryId)
-  const isOverdue = todo.dueDate < new Date() && todo.status !== 'completed'
+  const categoryName = await getCategoryName(todo.categoryId)
+  // Convert dueDate to Date object if it's a string
+  const dueDate = typeof todo.dueDate === 'string' ? new Date(todo.dueDate) : todo.dueDate
+  const isOverdue = dueDate < new Date() && todo.status !== 'completed'
 
   todoDiv.innerHTML = `
     <div class="flex items-start justify-between">
@@ -71,7 +73,7 @@ function createTodoElement(todo: Todo): HTMLElement {
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
-            ${formatDate(todo.dueDate)}
+            ${formatDate(dueDate)}
             ${isOverdue ? '(Overdue)' : ''}
           </span>
         </div>
@@ -106,7 +108,7 @@ function createTodoElement(todo: Todo): HTMLElement {
  * Handles editing a todo item
  */
 async function handleEditTodo(todoId: string): Promise<void> {
-  const todos = getAllTodos()
+  const todos = await getAllTodos()
   const todo = todos.find(t => t.id === todoId)
 
   if (!todo) {
@@ -117,7 +119,7 @@ async function handleEditTodo(todoId: string): Promise<void> {
     return
   }
 
-  const categories = getAllCategories()
+  const categories = await getAllCategories()
   if (categories.length === 0) {
     await showAlertModal({
       title: 'No categories available',
@@ -218,7 +220,7 @@ async function handleEditTodo(todoId: string): Promise<void> {
  * Handles deleting a todo item
  */
 async function handleDeleteTodo(todoId: string): Promise<void> {
-  const todos = getAllTodos()
+  const todos = await getAllTodos()
   const todo = todos.find(t => t.id === todoId)
 
   if (!todo) {
@@ -239,26 +241,19 @@ async function handleDeleteTodo(todoId: string): Promise<void> {
 
   if (!confirmed) return
 
-  const success = deleteTodo(todoId)
-  if (success) {
-    renderTodoList()
-    await showAlertModal({
-      title: 'Todo deleted',
-      message: `Todo "${todo.name}" was deleted.`
-    })
-  } else {
-    await showAlertModal({
-      title: 'Todo not found',
-      message: 'The todo could not be deleted because it no longer exists.'
-    })
-  }
+  await deleteTodo(todoId)
+  renderTodoList()
+  await showAlertModal({
+    title: 'Todo deleted',
+    message: `Todo "${todo.name}" was deleted.`
+  })
 }
 
 /**
  * Handles clearing all completed todos
  */
 async function handleClearCompleted(): Promise<void> {
-  const todos = getAllTodos()
+  const todos = await getAllTodos()
   const completedCount = todos.filter(t => t.status === 'completed').length
 
   if (completedCount === 0) {
@@ -275,7 +270,7 @@ async function handleClearCompleted(): Promise<void> {
 
   if (!confirmed) return
 
-  const deletedCount = clearCompletedTodos()
+  const deletedCount = await clearCompletedTodos()
   renderTodoList()
 
   await showAlertModal({
@@ -287,8 +282,8 @@ async function handleClearCompleted(): Promise<void> {
 /**
  * Renders the complete todo list
  */
-export function renderTodoList(): void {
-  const todos = getAllTodos()
+export async function renderTodoList(): Promise<void> {
+  const todos = await getAllTodos()
   const todoListContainer = document.getElementById('todo-list')
 
   if (!todoListContainer) {
@@ -297,7 +292,7 @@ export function renderTodoList(): void {
   }
 
   // Update the header with Clear Completed button
-  updateTodoListHeader()
+  await updateTodoListHeader()
 
   // Clear existing content
   todoListContainer.innerHTML = ''
@@ -315,24 +310,24 @@ export function renderTodoList(): void {
     return
   }
 
-  // Create and append todo elements
-  todos.forEach(todo => {
-    const todoElement = createTodoElement(todo)
+  // Create and append todo elements - await each one
+  for (const todo of todos) {
+    const todoElement = await createTodoElement(todo)
     todoListContainer.appendChild(todoElement)
-  })
+  }
 }
 
 /**
  * Updates the todo list header with the Clear Completed button
  */
-function updateTodoListHeader(): void {
+async function updateTodoListHeader(): Promise<void> {
   const headerContainer = document.querySelector('.lg\\:col-span-2 .bg-white h2')
   
   if (!headerContainer || !headerContainer.parentElement) {
     return
   }
 
-  const todos = getAllTodos()
+  const todos = await getAllTodos()
   const hasCompletedTodos = todos.some(t => t.status === 'completed')
 
   // Check if button already exists

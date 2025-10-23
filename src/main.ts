@@ -114,7 +114,7 @@ function setupEventListeners(): void {
           return
         }
 
-        const newCategory = addCategory(categoryName)
+        const newCategory = await addCategory(categoryName)
         updateCategoriesDropdown()
 
         await showAlertModal({
@@ -135,7 +135,7 @@ function setupEventListeners(): void {
   const addTodoButton = document.querySelector<HTMLButtonElement>('#addTodo')
   if (addTodoButton) {
     addTodoButton.onclick = async () => {
-      const categories = getAllCategories()
+      const categories = await getAllCategories()
       if (categories.length === 0) {
         await showAlertModal({
           title: 'Add a category first',
@@ -201,7 +201,7 @@ function setupEventListeners(): void {
         return
       }
 
-      const newTodo = createTodo({
+      const newTodo = await createTodo({
         name,
         status: 'pending',
         categoryId: result.categoryId,
@@ -221,7 +221,7 @@ function setupEventListeners(): void {
   const deleteCategoryButton = document.querySelector<HTMLButtonElement>('#deleteCategory')
   if (deleteCategoryButton) {
     deleteCategoryButton.onclick = async () => {
-      const categories = getAllCategories()
+      const categories = await getAllCategories()
       if (categories.length === 0) {
         await showAlertModal({
           title: 'No categories to delete',
@@ -262,7 +262,7 @@ function setupEventListeners(): void {
         return
       }
 
-      const todos = getAllTodos()
+      const todos = await getAllTodos()
       const hasTodos = todos.some(todo => todo.categoryId === category.id)
       if (hasTodos) {
         await showAlertModal({
@@ -283,19 +283,12 @@ function setupEventListeners(): void {
 
       if (!confirmed) return
 
-      const removed = deleteCategory(category.id)
-      if (removed) {
-        updateCategoriesDropdown()
-        await showAlertModal({
-          title: 'Category deleted',
-          message: `Category "${category.name}" has been deleted.`
-        })
-      } else {
-        await showAlertModal({
-          title: 'Category not found',
-          message: 'The category was already removed.'
-        })
-      }
+      await deleteCategory(category.id)
+      updateCategoriesDropdown()
+      await showAlertModal({
+        title: 'Category deleted',
+        message: `Category "${category.name}" has been deleted.`
+      })
     }
   }
 
@@ -314,9 +307,9 @@ function setupEventListeners(): void {
 }
 
 // Function to populate categories dropdown
-function updateCategoriesDropdown(): void {
+async function updateCategoriesDropdown(): Promise<void> {
   const dropdown = document.querySelector<HTMLSelectElement>("#categoriesDropdown")!
-  const categories = getAllCategories()
+  const categories = await getAllCategories()
 
   // Clear existing options (except the first placeholder)
   dropdown.innerHTML = '<option value="" disabled selected>Select a category</option>'

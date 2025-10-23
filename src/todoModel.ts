@@ -1,3 +1,16 @@
+// Import API functions
+import {
+  fetchAllTodos,
+  createTodoAPI,
+  updateTodoAPI,
+  deleteTodoAPI,
+  clearCompletedTodosAPI,
+  fetchAllCategories,
+  createCategoryAPI,
+  deleteCategoryAPI,
+} from "./apiService"
+
+// Keep interfaces (export them for apiService.ts)
 export interface Category {
   id: string // unique identifier
   name: string // category name
@@ -19,48 +32,48 @@ export interface CreateTodoInput {
   dueDate: Date | string // Accept both Date and string
 }
 
-const store = {
-  todos: [] as Todo[],
-  categories: [] as Category[],
-}
+// const store = {
+//   todos: [] as Todo[],
+//   categories: [] as Category[],
+// }
 
 // Initialize with seed data
-function initializeSeedData(): void {
+/* function initializeSeedData(): void {
   // Only initialize if the store is empty
   if (store.categories.length === 0 && store.todos.length === 0) {
     // Create the School category
-    const schoolCategory = addCategory('School')
-    
+    const schoolCategory = addCategory("School")
+
     // Create the three todo items
     createTodo({
-      name: 'Mow the Lawn',
-      status: 'pending',
+      name: "Mow the Lawn",
+      status: "pending",
       categoryId: schoolCategory.id,
-      dueDate: new Date('2025-10-10')
+      dueDate: new Date("2025-10-10"),
     })
-    
+
     createTodo({
-      name: 'Finish my homework',
-      status: 'in-progress',
+      name: "Finish my homework",
+      status: "in-progress",
       categoryId: schoolCategory.id,
-      dueDate: new Date('2025-10-08')
+      dueDate: new Date("2025-10-08"),
     })
-    
+
     createTodo({
-      name: 'Watch the October 2, 2025 class session video',
-      status: 'completed',
+      name: "Watch the October 2, 2025 class session video",
+      status: "completed",
       categoryId: schoolCategory.id,
-      dueDate: new Date('2025-10-03')
+      dueDate: new Date("2025-10-03"),
     })
-    
-    console.log('Seed data initialized with School category and 3 todos')
+
+    console.log("Seed data initialized with School category and 3 todos")
   }
-}
+} */
 
 // Initialize seed data when the module loads
-initializeSeedData()
+//initializeSeedData()
 
-function generateId(): string {
+/* function generateId(): string {
   // Get current time to ensure uniqueness
   const now = Date.now()
 
@@ -68,10 +81,14 @@ function generateId(): string {
   const randomStr = Math.random().toString(36).substring(2, 8)
 
   return `${now}-${randomStr}`
+} */
+
+export async function createTodo(input: CreateTodoInput): Promise<Todo> {
+  return createTodoAPI(input)
 }
 
 // Function to create a new Todo
-export function createTodo(input: CreateTodoInput): Todo {
+/* export function createTodo(input: CreateTodoInput): Todo {
   const newTodo = {
     id: generateId(), // auto-generate unique ID
     name: input.name,
@@ -89,9 +106,16 @@ export function createTodo(input: CreateTodoInput): Todo {
     store.todos
   )
   return newTodo
+} */
+
+export async function editTodo(
+  id: string,
+  updates: Partial<Pick<Todo, "name" | "status" | "categoryId" | "dueDate">>
+): Promise<Todo> {
+  return updateTodoAPI(id, updates)
 }
 
-export function editTodo(
+/* export function editTodo(
   id: string,
   updates: Partial<Pick<Todo, "name" | "status" | "categoryId" | "dueDate">>
 ): Todo | undefined {
@@ -115,10 +139,14 @@ export function editTodo(
     todo.dueDate = updates.dueDate
   }
   return todo
+} */
+
+export async function addCategory(name: string): Promise<Category> {
+  return createCategoryAPI(name)
 }
 
 // Function to create a new Category
-export function addCategory(name: string): Category {
+/* export function addCategory(name: string): Category {
   const newCategory = {
     id: generateId(), // auto-generate unique ID
     name,
@@ -129,9 +157,13 @@ export function addCategory(name: string): Category {
     store.categories
   )
   return newCategory
+} */
+
+export async function deleteTodo(id: string): Promise<void> {
+  return deleteTodoAPI(id)
 }
 
-export function deleteTodo(id: string): boolean {
+/* export function deleteTodo(id: string): boolean {
   const originalLength = store.todos.length
   // Create a new array excluding the todo with the given id
   store.todos = store.todos.filter((todo) => todo.id !== id)
@@ -140,9 +172,13 @@ export function deleteTodo(id: string): boolean {
     store.todos
   )
   return store.todos.length < originalLength // Return true if a todo was deleted
+} */
+
+export async function deleteCategory(id: string): Promise<void> {
+  return deleteCategoryAPI(id)
 }
 
-export function deleteCategory(id: string): boolean {
+/* export function deleteCategory(id: string): boolean {
   const originalLength = store.categories.length
   // Create a new array excluding the category with the given id
   store.categories = store.categories.filter((category) => category.id !== id)
@@ -151,17 +187,30 @@ export function deleteCategory(id: string): boolean {
     store.categories
   )
   return store.categories.length < originalLength // Return true if a category was deleted
+} */
+
+export async function getAllCategories(): Promise<Category[]> {
+  return fetchAllCategories()
 }
 
-export function getAllCategories(): Category[] {
+/* export function getAllCategories(): Category[] {
   return [...store.categories] // Return a copy
+} */
+
+export async function getAllTodos(): Promise<Todo[]> {
+  return fetchAllTodos()
 }
 
-export function getAllTodos(): Todo[] {
+/* export function getAllTodos(): Todo[] {
   return [...store.todos] // Return a copy
+} */
+
+export async function clearCompletedTodos(): Promise<number> {
+  const result = await clearCompletedTodosAPI()
+  return result.deletedCount
 }
 
-export function clearCompletedTodos(): number {
+/* export function clearCompletedTodos(): number {
   const originalLength = store.todos.length
   // Filter out all completed todos
   store.todos = store.todos.filter((todo) => todo.status !== 'completed')
@@ -171,4 +220,4 @@ export function clearCompletedTodos(): number {
     store.todos
   )
   return deletedCount // Return the number of todos cleared
-}
+} */
