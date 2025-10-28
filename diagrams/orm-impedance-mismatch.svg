@@ -1,0 +1,234 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; fill: #34495e; }
+      .section-title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #2c3e50; }
+      .label { font-family: 'Courier New', monospace; font-size: 14px; fill: #2c3e50; }
+      .code { font-family: 'Courier New', monospace; font-size: 12px; fill: #27ae60; }
+      .sql { font-family: 'Courier New', monospace; font-size: 12px; fill: #c0392b; }
+      .description { font-family: Arial, sans-serif; font-size: 13px; fill: #555; }
+      
+      .object-box { fill: #e8f4f8; stroke: #3498db; stroke-width: 2; }
+      .object-box:hover { fill: #d4e9f2; cursor: pointer; }
+      
+      .table-box { fill: #fef5e7; stroke: #f39c12; stroke-width: 2; }
+      .table-box:hover { fill: #fdebc7; cursor: pointer; }
+      
+      .orm-box { fill: #e8f8f5; stroke: #16a085; stroke-width: 3; }
+      .orm-box:hover { fill: #d1f2eb; cursor: pointer; }
+      
+      .problem-arrow { stroke: #e74c3c; stroke-width: 3; fill: none; stroke-dasharray: 5,5; }
+      .solution-arrow { stroke: #27ae60; stroke-width: 3; fill: none; }
+      
+      .problem-badge { fill: #e74c3c; }
+      .solution-badge { fill: #27ae60; }
+      .badge-text { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: white; }
+      
+      .mismatch-icon { fill: #e74c3c; opacity: 0.8; }
+      .checkmark-icon { fill: #27ae60; opacity: 0.8; }
+      
+      /* Animation classes */
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+      }
+      
+      .animated-problem { animation: pulse 2s infinite; }
+      
+      @keyframes slide {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(10px); }
+      }
+      
+      .animated-arrow { animation: slide 1s ease-in-out infinite alternate; }
+    </style>
+    
+    <!-- Arrow markers -->
+    <marker id="arrowhead-problem" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#e74c3c" />
+    </marker>
+    
+    <marker id="arrowhead-solution" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#27ae60" />
+    </marker>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" class="title">Object-Relational Impedance Mismatch</text>
+  <text x="600" y="65" text-anchor="middle" class="subtitle">Why ORMs like Prisma are Essential</text>
+  
+  <!-- Problem Section (Top Half) -->
+  <g id="problem-section">
+    <!-- Problem Badge -->
+    <rect x="50" y="100" width="120" height="35" rx="5" class="problem-badge"/>
+    <text x="110" y="123" text-anchor="middle" class="badge-text">❌ THE PROBLEM</text>
+    
+    <!-- Left Side: Object-Oriented World -->
+    <rect x="50" y="160" width="320" height="280" rx="10" class="object-box"/>
+    <text x="210" y="190" text-anchor="middle" class="section-title">Object-Oriented World</text>
+    <text x="210" y="210" text-anchor="middle" class="description">(TypeScript/JavaScript)</text>
+    
+    <!-- Todo Object Example -->
+    <text x="70" y="240" class="code">class Todo {</text>
+    <text x="90" y="260" class="code">id: string</text>
+    <text x="90" y="280" class="code">name: string</text>
+    <text x="90" y="300" class="code">status: string</text>
+    <text x="90" y="320" class="code">category: Category  // Object!</text>
+    <text x="90" y="340" class="code">dueDate: Date</text>
+    <text x="70" y="360" class="code">}</text>
+    
+    <text x="70" y="390" class="code">const todo = {</text>
+    <text x="90" y="410" class="code">category: { name: "School" }</text>
+    <text x="70" y="430" class="code">}</text>
+    
+    <!-- Object Features -->
+    <circle cx="80" cy="245" r="3" fill="#3498db"/>
+    <circle cx="80" cy="265" r="3" fill="#3498db"/>
+    <circle cx="80" cy="285" r="3" fill="#3498db"/>
+    
+    <!-- Right Side: Relational World -->
+    <rect x="830" y="160" width="320" height="280" rx="10" class="table-box"/>
+    <text x="990" y="190" text-anchor="middle" class="section-title">Relational Database World</text>
+    <text x="990" y="210" text-anchor="middle" class="description">(SQLite/SQL)</text>
+    
+    <!-- SQL Table Examples -->
+    <text x="850" y="240" class="sql">TABLE todos {</text>
+    <text x="870" y="260" class="sql">id TEXT PRIMARY KEY,</text>
+    <text x="870" y="280" class="sql">name TEXT,</text>
+    <text x="870" y="300" class="sql">status TEXT,</text>
+    <text x="870" y="320" class="sql">category_id TEXT,  -- FK!</text>
+    <text x="870" y="340" class="sql">due_date INTEGER</text>
+    <text x="850" y="360" class="sql">}</text>
+    
+    <text x="850" y="390" class="sql">SELECT * FROM todos</text>
+    <text x="850" y="410" class="sql">JOIN categories</text>
+    <text x="850" y="430" class="sql">ON todos.category_id = ...</text>
+    
+    <!-- Problem Indicators -->
+    <g class="animated-problem">
+      <!-- Mismatch X marks -->
+      <path class="mismatch-icon" d="M 390 270 L 410 290 M 410 270 L 390 290" stroke="#e74c3c" stroke-width="4"/>
+      <path class="mismatch-icon" d="M 790 270 L 810 290 M 810 270 L 790 290" stroke="#e74c3c" stroke-width="4"/>
+    </g>
+    
+    <!-- Dashed Problem Arrow -->
+    <g class="animated-arrow">
+      <path d="M 380 300 Q 600 280 820 300" class="problem-arrow" marker-end="url(#arrowhead-problem)"/>
+      <text x="600" y="270" text-anchor="middle" class="description" fill="#e74c3c" font-weight="bold">
+        Manual Translation Required! 😰
+      </text>
+      <text x="600" y="290" text-anchor="middle" class="description" fill="#e74c3c">
+        Nested objects ↔ Foreign keys
+      </text>
+      <text x="600" y="310" text-anchor="middle" class="description" fill="#e74c3c">
+        Dates ↔ Timestamps • Arrays ↔ JOIN tables
+      </text>
+    </g>
+  </g>
+  
+  <!-- Solution Section (Bottom Half) -->
+  <g id="solution-section">
+    <!-- Solution Badge -->
+    <rect x="50" y="470" width="130" height="35" rx="5" class="solution-badge"/>
+    <text x="115" y="493" text-anchor="middle" class="badge-text">✓ THE SOLUTION</text>
+    
+    <!-- ORM Bridge -->
+    <rect x="400" y="520" width="400" height="240" rx="10" class="orm-box"/>
+    <text x="600" y="555" text-anchor="middle" class="section-title" fill="#16a085">Prisma ORM</text>
+    <text x="600" y="575" text-anchor="middle" class="description" fill="#16a085" font-weight="bold">
+      Automatic Translation Layer 🎯
+    </text>
+    
+    <!-- What Prisma Does -->
+    <rect x="420" y="590" width="360" height="150" rx="5" fill="white" stroke="#16a085" stroke-width="1"/>
+    
+    <g id="prisma-features">
+      <!-- Feature 1 -->
+      <circle cx="435" cy="610" r="5" class="checkmark-icon"/>
+      <text x="450" y="615" class="description">
+        <tspan font-weight="bold">Schema Definition:</tspan> Define once in schema.prisma
+      </text>
+      
+      <!-- Feature 2 -->
+      <circle cx="435" cy="640" r="5" class="checkmark-icon"/>
+      <text x="450" y="645" class="description">
+        <tspan font-weight="bold">Type Generation:</tspan> Auto-generates TypeScript types
+      </text>
+      
+      <!-- Feature 3 -->
+      <circle cx="435" cy="670" r="5" class="checkmark-icon"/>
+      <text x="450" y="675" class="description">
+        <tspan font-weight="bold">Query Translation:</tspan> Converts JS objects ↔ SQL
+      </text>
+      
+      <!-- Feature 4 -->
+      <circle cx="435" cy="700" r="5" class="checkmark-icon"/>
+      <text x="450" y="705" class="description">
+        <tspan font-weight="bold">Relation Handling:</tspan> Manages foreign keys automatically
+      </text>
+      
+      <!-- Feature 5 -->
+      <circle cx="435" cy="730" r="5" class="checkmark-icon"/>
+      <text x="450" y="735" class="description">
+        <tspan font-weight="bold">Type Safety:</tspan> Catch errors at compile time, not runtime
+      </text>
+    </g>
+    
+    <!-- Arrows showing ORM bridging -->
+    <!-- Left arrow from objects to ORM -->
+    <path d="M 370 300 Q 350 450 410 600" class="solution-arrow" marker-end="url(#arrowhead-solution)"/>
+    <text x="340" y="450" class="description" fill="#27ae60" font-weight="bold">
+      <tspan x="340" dy="0">Write in</tspan>
+      <tspan x="340" dy="20">TypeScript</tspan>
+    </text>
+    
+    <!-- Right arrow from ORM to database -->
+    <path d="M 790 600 Q 850 450 830 300" class="solution-arrow" marker-end="url(#arrowhead-solution)"/>
+    <text x="860" y="450" class="description" fill="#27ae60" font-weight="bold">
+      <tspan x="870" dy="0">Prisma generates</tspan>
+      <tspan x="870" dy="20">SQL queries</tspan>
+    </text>
+  </g>
+  
+  <!-- Code Example Comparison -->
+  <g id="code-comparison">
+    <!-- Without ORM (Manual) -->
+    <text x="80" y="485" class="description" fill="#e74c3c" font-weight="bold">Without ORM (Manual):</text>
+    <text x="80" y="505" class="sql" font-size="11">
+      const query = "SELECT * FROM todos JOIN categories..."
+    </text>
+    <text x="80" y="520" class="sql" font-size="11">
+      const rows = await db.query(query)
+    </text>
+    <text x="80" y="535" class="sql" font-size="11">
+      const todos = rows.map(row => ({ /* manual mapping */ }))
+    </text>
+    
+    <!-- With ORM (Prisma) -->
+    <text x="830" y="485" class="description" fill="#27ae60" font-weight="bold">With Prisma ORM:</text>
+    <text x="830" y="505" class="code" font-size="11">
+      const todos = await prisma.todo.findMany({
+    </text>
+    <text x="850" y="520" class="code" font-size="11">
+      include: { category: true }
+    </text>
+    <text x="830" y="535" class="code" font-size="11">
+      })  // ✨ That's it! Fully typed!
+    </text>
+  </g>
+  
+  <!-- Bottom Summary -->
+  <rect x="50" y="770" width="1100" height="1" fill="#ccc"/>
+  <text x="600" y="792" text-anchor="middle" class="description" font-style="italic">
+    Prisma eliminates the impedance mismatch by providing a unified, type-safe interface between your code and database
+  </text>
+  
+  <!-- Interactive Hint -->
+  <text x="10" y="795" class="description" font-size="11" fill="#999">
+    💡 Hover over boxes to highlight
+  </text>
+</svg>
