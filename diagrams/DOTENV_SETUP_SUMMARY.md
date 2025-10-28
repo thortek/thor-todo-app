@@ -1,153 +1,271 @@
 # dotenv Setup Summary
 
+## Updated Approach: Configure dotenv in Prisma Client File ✅
+
+After careful consideration, the Week 2 guide has been updated to configure dotenv in `server/db/prisma.ts` instead of `server/index.ts`. This is a **better practice** for several important reasons.
+
+---
+
+## Why Configure dotenv in `server/db/prisma.ts`?
+
+### ✅ **1. Separation of Concerns**
+Database configuration stays with database code. The Prisma Client file is responsible for database connections, so it should also be responsible for loading database configuration.
+
+### ✅ **2. Reusability Across Scripts**
+When you import Prisma in ANY file (not just your server), environment variables are automatically loaded:
+- Migration scripts
+- Seed scripts
+- Standalone database utilities
+- Test files
+
+### ✅ **3. Earlier Loading**
+Environment variables are loaded when the Prisma module is imported, not when the Express server starts. This prevents timing issues.
+
+### ✅ **4. Cleaner Server File**
+Your `server/index.ts` stays focused on Express setup and doesn't need to know about database configuration details.
+
+### ✅ **5. Standard Pattern**
+This follows Prisma's recommended patterns and matches how most production applications are structured.
+
+---
+
+## The Correct Setup
+
+### File: `server/db/prisma.ts`
+
+```typescript
+// ⚠️ CRITICAL: Load environment variables FIRST
+import dotenv from 'dotenv'
+dotenv.config()
+
+// ✅ Now PrismaClient can read process.env.DATABASE_URL
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+})
+
+process.on('beforeExit', async () => {
+  await prisma.$disconnect()
+})
+
+export default prisma
+```
+
+### File: `server/index.ts`
+
+```typescript
+// ✅ Clean! No dotenv needed here
+import express from 'express'
+import cors from 'cors'
+import { initializeSeedData } from './models/todoStore.js'
+import todoRoutes from './routes/todoRoutes.js'
+import categoryRoutes from './routes/categoryRoutes.js'
+
+const app = express()
+const PORT = process.env.PORT || 3000
+
+// Middleware
+app.use(cors())
+app.use(express.json())
+
+// Routes
+app.use('/api/todos', todoRoutes)
+app.use('/api/categories', categoryRoutes)
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'API server is running' })
+})
+
+// Initialize seed data (Prisma is already configured when imported)
+initializeSeedData()
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})
+```
+
+---
+
 ## What Changed in Week 2 Guide
 
-The Week 2 Prisma ORM guide has been updated to include proper dotenv configuration. Here's what was added:
-
----
-
-## 1. Installation (Part 2.1)
-
-**Added `dotenv` to the installation command:**
-
+### 1. **Installation (Part 2.1)** - No Change
+Still installs dotenv with other packages:
 ```bash
 npm install --save-dev prisma
 npm install @prisma/client dotenv
 ```
 
-**Explanation added:**
-- `dotenv`: Loads environment variables from `.env` file into `process.env`
+### 2. **Configuration Section (Part 2.4)** - Updated
+Now explains WHY to configure in Prisma file:
+- Separation of concerns
+- Reusability
+- Cleaner code
+- Standard pattern
+
+### 3. **Prisma Client Creation (Part 5.1)** - Updated
+Shows dotenv configuration at the TOP of `server/db/prisma.ts`:
+```typescript
+import dotenv from 'dotenv'
+dotenv.config()  // BEFORE PrismaClient import
+
+import { PrismaClient } from '@prisma/client'
+```
+
+### 4. **Checklist (Part 12.3)** - Updated
+Changed from:
+- ❌ `dotenv` configured in `server/index.ts`
+
+To:
+- ✅ `dotenv` configured in `server/db/prisma.ts` (called BEFORE importing PrismaClient)
+
+### 5. **Troubleshooting (Part 13)** - Enhanced
+Added visual examples showing correct vs incorrect import order:
+```typescript
+// ✅ CORRECT
+import dotenv from 'dotenv'
+dotenv.config()
+import { PrismaClient } from '@prisma/client'
+
+// ❌ WRONG
+import { PrismaClient } from '@prisma/client'
+import dotenv from 'dotenv'
+dotenv.config()  // Too late!
+```
 
 ---
 
-## 2. Configuration (New Part 2.4)
+## Benefits in Practice
 
-**New section added: "Configure dotenv in Your Server"**
+### Scenario 1: Migration Script
+```typescript
+// scripts/migrate.ts
+import prisma from '../server/db/prisma.js'  // ✅ Environment variables auto-loaded!
 
-Shows how to update `server/index.ts`:
+async function migrate() {
+  // No need to call dotenv.config() here
+  await prisma.$executeRaw`...`
+}
+```
+
+### Scenario 2: Seed Script
+```typescript
+// prisma/seed.ts
+import prisma from '../server/db/prisma.js'  // ✅ Works automatically!
+
+async function seed() {
+  await prisma.category.create({ ... })
+}
+```
+
+### Scenario 3: Test File
+```typescript
+// tests/todo.test.ts
+import prisma from '../server/db/prisma.js'  // ✅ Environment loaded!
+
+test('create todo', async () => {
+  const todo = await prisma.todo.create({ ... })
+})
+```
+
+**Without this approach**, you'd need to call `dotenv.config()` in EVERY file that uses Prisma!
+
+---
+
+## Common Mistakes to Avoid
+
+### ❌ Mistake 1: Importing PrismaClient Before dotenv
+```typescript
+// WRONG ORDER
+import { PrismaClient } from '@prisma/client'
+import dotenv from 'dotenv'
+dotenv.config()
+```
+**Problem:** PrismaClient is instantiated before environment variables are loaded.
+
+### ❌ Mistake 2: Configuring dotenv in Multiple Places
+```typescript
+// server/index.ts
+dotenv.config()
+
+// server/db/prisma.ts
+dotenv.config()  // Redundant!
+```
+**Problem:** Unnecessary duplication. Configure once in Prisma file.
+
+### ❌ Mistake 3: Forgetting dotenv in Prisma File
+```typescript
+// server/db/prisma.ts
+import { PrismaClient } from '@prisma/client'  // Missing dotenv!
+const prisma = new PrismaClient()
+```
+**Problem:** `DATABASE_URL` is undefined, Prisma can't connect.
+
+---
+
+## Testing It Works
+
+Add a temporary test to verify environment variables are loaded:
 
 ```typescript
-// Load environment variables FIRST
+// server/db/prisma.ts
 import dotenv from 'dotenv'
 dotenv.config()
 
-// Now import everything else
-import express from 'express'
-// ... rest of imports
-```
-
-**Key Points Emphasized:**
-- ✅ `dotenv.config()` must run FIRST before any code that accesses `process.env`
-- ✅ Prisma Client reads `DATABASE_URL` from `process.env`
-- ✅ Loading it first ensures all environment variables are available
-
-**Alternative method shown:**
-- Node.js built-in `--env-file` flag (for Node 20.6+)
-- But recommends dotenv for compatibility
-
----
-
-## 3. Updated Checklist (Part 12.3)
-
-**Added to Pre-Week 3 Checklist:**
-- [ ] Prisma packages installed (including `dotenv`)
-- [ ] `dotenv` configured in `server/index.ts` (imported and called before other imports)
-
----
-
-## 4. Enhanced Troubleshooting (Part 13)
-
-**Added three new troubleshooting sections:**
-
-### "Cannot find module 'dotenv'"
-Solution: Install dotenv package
-
-### "Environment variable not found: DATABASE_URL"
-Enhanced with dotenv-specific checks:
-1. Check `.env` file exists
-2. Ensure dotenv is installed
-3. Verify `dotenv.config()` is called at the top
-
-### "Environment variables not loading"
-New section covering:
-- Call order of `dotenv.config()`
-- `.env` file syntax errors
-- File location verification
-
----
-
-## 5. Updated Summary (Part 12.1)
-
-**Changed:**
-- ❌ Old: "Installed Prisma: CLI and client packages"
-- ✅ New: "Installed Prisma: CLI, client packages, and dotenv"
-
-**Added:**
-- ✅ "Configured Environment: Set up dotenv to load environment variables"
-
----
-
-## Why This Matters
-
-### Without dotenv:
-```typescript
-// ❌ This won't work - process.env.DATABASE_URL is undefined
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
-```
-
-### With dotenv:
-```typescript
-// ✅ This works - environment variables are loaded
-import dotenv from 'dotenv'
-dotenv.config()
+console.log('✅ DATABASE_URL loaded:', process.env.DATABASE_URL)
+// Should print: ✅ DATABASE_URL loaded: file:./dev.db
 
 import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
-// Now DATABASE_URL is available in process.env
+// ... rest of code
 ```
+
+If you see `undefined`, dotenv isn't working correctly!
 
 ---
 
-## Quick Setup Commands
+## Quick Reference
 
-For students starting Week 2:
-
+### Installation
 ```bash
-# Install all dependencies including dotenv
+npm install dotenv @prisma/client
 npm install --save-dev prisma
-npm install @prisma/client dotenv
-
-# Initialize Prisma
-npx prisma init --datasource-provider sqlite
-
-# Generate Prisma Client
-npx prisma generate
 ```
 
-Then update `server/index.ts` to add dotenv at the top!
+### File Structure
+```
+thor-todo-app/
+├── .env                    # DATABASE_URL="file:./dev.db"
+├── prisma/
+│   └── schema.prisma
+├── server/
+│   ├── db/
+│   │   └── prisma.ts       # ← Configure dotenv HERE
+│   └── index.ts            # ← NOT here
+```
 
----
-
-## Common Student Mistakes
-
-1. **Forgetting to install dotenv** → Server can't read `.env` file
-2. **Calling `dotenv.config()` too late** → Variables not loaded in time
-3. **Wrong `.env` file location** → Should be in project root
-4. **Syntax errors in `.env`** → No spaces around `=`, no quotes needed
-
----
-
-## Testing dotenv Works
-
-Add this temporary test to `server/index.ts`:
-
+### Import Order (Critical!)
 ```typescript
+// 1. First: Load environment variables
 import dotenv from 'dotenv'
 dotenv.config()
 
-console.log('DATABASE_URL:', process.env.DATABASE_URL)
-// Should print: DATABASE_URL: file:./dev.db
+// 2. Then: Import PrismaClient
+import { PrismaClient } from '@prisma/client'
+
+// 3. Finally: Create instance
+const prisma = new PrismaClient()
 ```
 
-If you see `undefined`, dotenv isn't configured correctly!
+---
+
+## Conclusion
+
+Configuring dotenv in `server/db/prisma.ts` is the **professional, scalable approach** that:
+- Follows best practices
+- Makes your code more maintainable
+- Works across all scripts and tools
+- Keeps concerns properly separated
+
+This is how real production applications should be structured! 🎯

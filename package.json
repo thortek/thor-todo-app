@@ -24,6 +24,7 @@
     "@prisma/client": "^6.18.0",
     "@tailwindcss/vite": "^4.1.13",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "tailwindcss": "^4.1.13"
   }

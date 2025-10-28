@@ -98,64 +98,30 @@ DATABASE_URL="file:./dev.db"
 
 **Note:** The `.env` file contains sensitive configuration. Make sure it's in your `.gitignore`!
 
-### 2.4 Configure dotenv in Your Server
+### 2.4 Configure dotenv for Prisma
 
-To load environment variables from `.env` into your Node.js application, you need to configure dotenv.
+To load environment variables from `.env` into your Node.js application, configure dotenv where you create the Prisma Client instance.
 
-**Update `server/index.ts`** to load environment variables at the very top:
+**Best Practice:** Load environment variables in the Prisma Client file, not in your main server file. This ensures environment variables are available whenever Prisma is imported, even in standalone scripts.
 
-```typescript
-// Load environment variables FIRST (before any other imports that might use them)
-import dotenv from 'dotenv'
-dotenv.config()
+**Why this approach is better:**
+- ✅ **Separation of Concerns**: Database configuration stays with database code
+- ✅ **Reusability**: Migration scripts, seed files, and other tools automatically get environment variables
+- ✅ **Cleaner Code**: Server file stays focused on Express setup
+- ✅ **Standard Pattern**: Recommended by Prisma documentation
 
-// Now import everything else
-import express from 'express'
-import cors from 'cors'
-import { initializeSeedData } from './models/todoStore.js'
-import todoRoutes from './routes/todoRoutes.js'
-import categoryRoutes from './routes/categoryRoutes.js'
-
-const app = express()
-const PORT = process.env.PORT || 3000
-
-// Middleware
-app.use(cors())
-app.use(express.json())
-
-// Routes
-app.use('/api/todos', todoRoutes)
-app.use('/api/categories', categoryRoutes)
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'API server is running' })
-})
-
-// Initialize seed data
-initializeSeedData()
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
-})
-```
-
-**Why at the top?**
-- `dotenv.config()` must run before any code that accesses `process.env`
-- Prisma Client reads `DATABASE_URL` from `process.env`
-- Loading it first ensures all environment variables are available
+We'll configure dotenv when we create the Prisma Client instance in Part 5 below.
 
 **Alternative: Using Node.js flags (Optional)**
 
-Instead of importing dotenv in your code, you can use Node.js's built-in flag:
+For Node.js 20.6+, you can use the built-in `--env-file` flag:
 
 ```bash
 # In package.json scripts
 "server": "node --env-file=.env --watch-path=server --import tsx server/index.ts"
 ```
 
-However, for simplicity and compatibility, we'll use the dotenv package method.
+However, configuring it in the Prisma file is more portable and explicit.
 
 ### 2.5 Update .gitignore
 
@@ -373,6 +339,10 @@ mkdir server/db
 
 **`server/db/prisma.ts`:**
 ```typescript
+// Load environment variables FIRST
+import dotenv from 'dotenv'
+dotenv.config()
+
 import { PrismaClient } from '@prisma/client'
 
 // Create a single Prisma Client instance
@@ -388,10 +358,21 @@ process.on('beforeExit', async () => {
 export default prisma
 ```
 
+**Important: dotenv configuration**
+- ⚠️ `dotenv.config()` MUST be called before importing `PrismaClient`
+- This ensures `process.env.DATABASE_URL` is loaded from `.env`
+- Without this, Prisma can't find the database URL
+
 **Why a single instance?**
 - Prisma Client manages a connection pool internally
 - Creating multiple instances can exhaust database connections
 - This pattern ensures one shared client across your app
+
+**Why configure dotenv here instead of server/index.ts?**
+- ✅ Environment variables load when Prisma is imported (not just when server starts)
+- ✅ Migration scripts and seed files automatically get environment variables
+- ✅ Keeps database configuration together with database client
+- ✅ Follows the single responsibility principle
 
 ### 5.2 Update todoStore.ts to Use Prisma
 
@@ -1299,7 +1280,7 @@ thor-todo-app/
 Before starting Week 3, ensure:
 
 - [ ] Prisma packages installed (`@prisma/client`, `prisma` dev dependency, and `dotenv`)
-- [ ] `dotenv` configured in `server/index.ts` (imported and called before other imports)
+- [ ] `dotenv` configured in `server/db/prisma.ts` (called BEFORE importing PrismaClient)
 - [ ] `prisma/schema.prisma` file exists with Category and Todo models
 - [ ] `.env` file exists with `DATABASE_URL="file:./dev.db"`
 - [ ] `.env` is in `.gitignore`
@@ -1392,9 +1373,30 @@ npm install dotenv
 ### Issue: Environment variables not loading
 
 **Solution:**
-- Make sure `dotenv.config()` is called BEFORE any code that uses `process.env`
-- Check that your `.env` file has no syntax errors (no quotes around values, no spaces around =)
+- Ensure `dotenv.config()` is called at the TOP of `server/db/prisma.ts` BEFORE importing `PrismaClient`
+- Check that your `.env` file has no syntax errors:
+  ```env
+  DATABASE_URL="file:./dev.db"
+  # Correct: No spaces around =
+  # Correct: Value can be in quotes or not
+  ```
 - Verify `.env` is in the root directory of your project (same level as `package.json`)
+- Make sure `dotenv.config()` is NOT commented out
+
+**Correct order in `server/db/prisma.ts`:**
+```typescript
+// ✅ CORRECT
+import dotenv from 'dotenv'
+dotenv.config()  // Called FIRST
+
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
+
+// ❌ WRONG
+import { PrismaClient } from '@prisma/client'
+import dotenv from 'dotenv'
+dotenv.config()  // Too late! PrismaClient already imported
+```
 
 ### Issue: Can't run migrations yet
 
