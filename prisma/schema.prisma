@@ -1,0 +1,36 @@
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Category model
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationship: One category has many todos
+  todos     Todo[]
+}
+
+// Todo model
+model Todo {
+  id         String   @id @default(uuid())
+  name       String
+  status     String   @default("pending") // "pending" | "in-progress" | "completed"
+  categoryId String
+  dueDate    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  // Relationship: Many todos belong to one category
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}

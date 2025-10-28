@@ -8,9 +8,15 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
 dist-ssr
 *.local
+
+# Update for Prisma
+.env
+*.db
+*.db-journal
+dist/
+dist-server/
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +28,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+/src/generated/prisma

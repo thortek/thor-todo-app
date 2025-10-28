@@ -37,16 +37,17 @@ Prisma is a next-generation ORM (Object-Relational Mapping) tool that provides:
 
 ### 2.1 Install Prisma Dependencies
 
-Install Prisma CLI (dev dependency) and Prisma Client (runtime dependency):
+Install Prisma CLI (dev dependency), Prisma Client (runtime dependency), and dotenv:
 
 ```bash
 npm install --save-dev prisma
-npm install @prisma/client
+npm install @prisma/client dotenv
 ```
 
 **Packages explained:**
 - `prisma`: CLI tool for schema management, migrations, and code generation
 - `@prisma/client`: Runtime client library used in your application code
+- `dotenv`: Loads environment variables from `.env` file into `process.env`
 
 ### 2.2 Initialize Prisma
 
@@ -97,7 +98,66 @@ DATABASE_URL="file:./dev.db"
 
 **Note:** The `.env` file contains sensitive configuration. Make sure it's in your `.gitignore`!
 
-### 2.4 Update .gitignore
+### 2.4 Configure dotenv in Your Server
+
+To load environment variables from `.env` into your Node.js application, you need to configure dotenv.
+
+**Update `server/index.ts`** to load environment variables at the very top:
+
+```typescript
+// Load environment variables FIRST (before any other imports that might use them)
+import dotenv from 'dotenv'
+dotenv.config()
+
+// Now import everything else
+import express from 'express'
+import cors from 'cors'
+import { initializeSeedData } from './models/todoStore.js'
+import todoRoutes from './routes/todoRoutes.js'
+import categoryRoutes from './routes/categoryRoutes.js'
+
+const app = express()
+const PORT = process.env.PORT || 3000
+
+// Middleware
+app.use(cors())
+app.use(express.json())
+
+// Routes
+app.use('/api/todos', todoRoutes)
+app.use('/api/categories', categoryRoutes)
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'API server is running' })
+})
+
+// Initialize seed data
+initializeSeedData()
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})
+```
+
+**Why at the top?**
+- `dotenv.config()` must run before any code that accesses `process.env`
+- Prisma Client reads `DATABASE_URL` from `process.env`
+- Loading it first ensures all environment variables are available
+
+**Alternative: Using Node.js flags (Optional)**
+
+Instead of importing dotenv in your code, you can use Node.js's built-in flag:
+
+```bash
+# In package.json scripts
+"server": "node --env-file=.env --watch-path=server --import tsx server/index.ts"
+```
+
+However, for simplicity and compatibility, we'll use the dotenv package method.
+
+### 2.5 Update .gitignore
 
 Ensure your `.gitignore` includes:
 
@@ -1196,7 +1256,8 @@ thor-todo-app/
 
 ### 12.1 What We Accomplished
 
-✅ **Installed Prisma**: CLI and client packages  
+✅ **Installed Prisma**: CLI, client packages, and dotenv  
+✅ **Configured Environment**: Set up dotenv to load environment variables  
 ✅ **Initialized Prisma**: Created `prisma/` directory and schema file  
 ✅ **Defined Schema**: Created Category and Todo models with relationships  
 ✅ **Generated Client**: Auto-generated TypeScript types and query methods  
@@ -1237,7 +1298,8 @@ thor-todo-app/
 
 Before starting Week 3, ensure:
 
-- [ ] Prisma packages installed (`@prisma/client` and `prisma` dev dependency)
+- [ ] Prisma packages installed (`@prisma/client`, `prisma` dev dependency, and `dotenv`)
+- [ ] `dotenv` configured in `server/index.ts` (imported and called before other imports)
 - [ ] `prisma/schema.prisma` file exists with Category and Todo models
 - [ ] `.env` file exists with `DATABASE_URL="file:./dev.db"`
 - [ ] `.env` is in `.gitignore`
@@ -1304,10 +1366,35 @@ Restart your TypeScript language server (VS Code: Cmd+Shift+P → "TypeScript: R
 ### Issue: "Environment variable not found: DATABASE_URL"
 
 **Solution:**
-Check that `.env` file exists in project root with:
+1. Check that `.env` file exists in project root with:
 ```
 DATABASE_URL="file:./dev.db"
 ```
+
+2. Ensure `dotenv` is installed:
+```bash
+npm install dotenv
+```
+
+3. Verify `dotenv.config()` is called at the top of `server/index.ts`:
+```typescript
+import dotenv from 'dotenv'
+dotenv.config()  // Must be before other imports
+```
+
+### Issue: "Cannot find module 'dotenv'"
+
+**Solution:**
+```bash
+npm install dotenv
+```
+
+### Issue: Environment variables not loading
+
+**Solution:**
+- Make sure `dotenv.config()` is called BEFORE any code that uses `process.env`
+- Check that your `.env` file has no syntax errors (no quotes around values, no spaces around =)
+- Verify `.env` is in the root directory of your project (same level as `package.json`)
 
 ### Issue: Can't run migrations yet
 
