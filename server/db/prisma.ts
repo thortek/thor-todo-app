@@ -9,9 +9,15 @@ const prisma = new PrismaClient({
   log: ['query', 'info', 'warn', 'error'], // Enable query logging (helpful for learning!)
 })
 
-// Handle cleanup on shutdown
-process.on('beforeExit', async () => {
+// Handle cleanup on proper shutdown signals (not beforeExit)
+process.on('SIGINT', async () => {
   await prisma.$disconnect()
+  process.exit(0)
+})
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
 })
 
 export default prisma

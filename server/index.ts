@@ -2,17 +2,25 @@ import express from 'express'
 import cors from 'cors'
 import todoRoutes from './routes/todoRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
-import { initializeSeedData } from './models/todoStore.js'
+//import { initializeSeedData } from './models/todoStore.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// Middleware
-app.use(cors()) // Enable CORS for frontend
+// CORS Configuration - MUST be before routes
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}))
+
+
+//Middleware
 app.use(express.json()) // Parse JSON bodies
 
 // Initialize seed data
-initializeSeedData()
+//initializeSeedData()
 
 // Routes
 app.use('/api/todos', todoRoutes)

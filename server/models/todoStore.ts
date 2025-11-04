@@ -16,41 +16,41 @@ export interface CreateTodoInput {
 // Prisma handles ID generation via UUID
 
 // Initialize with seed data
-export async function initializeSeedData(): Promise<void> {
-  // Check if data already exists
-  const existingCategories = await prisma.category.count()
+// export async function initializeSeedData(): Promise<void> {
+//   // Check if data already exists
+//   const existingCategories = await prisma.category.count()
   
-  if (existingCategories === 0) {
-    console.log('Initializing seed data...')
+//   if (existingCategories === 0) {
+//     console.log('Initializing seed data...')
     
-    // Create a category
-    const schoolCategory = await addCategory('School')
+//     // Create a category
+//     const schoolCategory = await addCategory('School')
     
-    // Create todos
-    await createTodo({
-      name: 'Mow the Lawn',
-      status: 'pending',
-      categoryId: schoolCategory.id,
-      dueDate: new Date('2025-10-10')
-    })
+//     // Create todos
+//     await createTodo({
+//       name: 'Mow the Lawn',
+//       status: 'pending',
+//       categoryId: schoolCategory.id,
+//       dueDate: new Date('2025-10-10')
+//     })
     
-    await createTodo({
-      name: 'Finish my homework',
-      status: 'in-progress',
-      categoryId: schoolCategory.id,
-      dueDate: new Date('2025-10-08')
-    })
+//     await createTodo({
+//       name: 'Finish my homework',
+//       status: 'in-progress',
+//       categoryId: schoolCategory.id,
+//       dueDate: new Date('2025-10-08')
+//     })
     
-    await createTodo({
-      name: 'Watch the October 2, 2025 class session video',
-      status: 'completed',
-      categoryId: schoolCategory.id,
-      dueDate: new Date('2025-10-03')
-    })
+//     await createTodo({
+//       name: 'Watch the October 2, 2025 class session video',
+//       status: 'completed',
+//       categoryId: schoolCategory.id,
+//       dueDate: new Date('2025-10-03')
+//     })
     
-    console.log('Seed data initialized!')
-  }
-}
+//     console.log('Seed data initialized!')
+//   }
+// }
 
 // ============================================
 // CRUD Operations for Todos
