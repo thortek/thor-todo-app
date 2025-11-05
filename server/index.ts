@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import todoRoutes from './routes/todoRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
+import chatRoutes from './routes/chatRoutes.js'
 //import { initializeSeedData } from './models/todoStore.js'
 
 const app = express()
@@ -25,6 +26,7 @@ app.use(express.json()) // Parse JSON bodies
 // Routes
 app.use('/api/todos', todoRoutes)
 app.use('/api/categories', categoryRoutes)
+app.use('/api/chat', chatRoutes)
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+/* Navigation Tabs */
+.nav-tab {
+  background-color: #e5e7eb;
+  color: #4b5563;
+}
+
+.nav-tab:hover {
+  background-color: #d1d5db;
+}
+
+.nav-tab.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* View Containers */
+.view-container {
+  transition: opacity 0.3s ease;
+}
+
+.view-container.hidden {
+  display: none;
+}
+
+/* Chat specific styles */
+.chat-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

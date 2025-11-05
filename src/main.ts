@@ -8,6 +8,7 @@ import {
   getAllTodos,
 } from "./todoModel"
 import { initTodoViewer, renderTodoList } from "./todoViewer"
+import { initChatViewer } from "./chatViewer"
 import {
   showAlertModal,
   showConfirmModal,
@@ -25,11 +26,14 @@ function initApp(): void {
   // Set up the main UI
   setupUI()
 
-  // Initialize the todo viewer
+  // Initialize the todo viewer (default view)
   initTodoViewer()
 
   // Set up event listeners
   setupEventListeners()
+  
+  // Set up navigation
+  setupNavigation()
 }
 
 function setupUI(): void {
@@ -39,43 +43,61 @@ function setupUI(): void {
         <header class="mb-8">
           <h1 class="text-3xl font-bold text-gray-900 mb-2">My Todo App</h1>
           <p class="text-gray-600">Manage your tasks efficiently</p>
+          
+          <!-- Navigation Tabs -->
+          <div class="flex gap-2 mt-4">
+            <button id="nav-todos" class="nav-tab active px-4 py-2 rounded-lg font-medium transition-colors">
+              📋 Todos
+            </button>
+            <button id="nav-chat" class="nav-tab px-4 py-2 rounded-lg font-medium transition-colors">
+              💬 AI Chat
+            </button>
+          </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <!-- Control Panel -->
-          <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-md p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Actions</h2>
+        <!-- Todo View -->
+        <div id="todo-view" class="view-container">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Control Panel -->
+            <div class="lg:col-span-1">
+              <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Actions</h2>
 
-              <div class="space-y-3">
-                <button type="button" id="addCategory" class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
-                  Add Category
-                </button>
+                <div class="space-y-3">
+                  <button type="button" id="addCategory" class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                    Add Category
+                  </button>
 
-                <button type="button" id="addTodo" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
-                  Add Todo
-                </button>
+                  <button type="button" id="addTodo" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                    Add Todo
+                  </button>
 
-                <button type="button" id="deleteCategory" class="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
-                  Delete Category
-                </button>
+                  <button type="button" id="deleteCategory" class="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                    Delete Category
+                  </button>
 
-                <select id="categoriesDropdown" class="w-full mt-4 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option value="" disabled selected>Select a category</option>
-                </select>
+                  <select id="categoriesDropdown" class="w-full mt-4 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="" disabled selected>Select a category</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Todo List -->
+            <div class="lg:col-span-2">
+              <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">My Todos</h2>
+                <div id="todo-list" class="space-y-4">
+                  <!-- Todos will be rendered here -->
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Todo List -->
-          <div class="lg:col-span-2">
-            <div class="bg-white rounded-lg shadow-md p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">My Todos</h2>
-              <div id="todo-list" class="space-y-4">
-                <!-- Todos will be rendered here -->
-              </div>
-            </div>
-          </div>
+        <!-- Chat View (hidden by default) -->
+        <div id="chat-view" class="view-container hidden">
+          <div id="chat-container"></div>
         </div>
       </div>
     </div>
@@ -321,4 +343,48 @@ async function updateCategoriesDropdown(): Promise<void> {
     option.textContent = category.name
     dropdown.appendChild(option)
   })
+}
+
+// Setup navigation between views
+function setupNavigation(): void {
+  const todosBtn = document.querySelector<HTMLButtonElement>('#nav-todos')
+  const chatBtn = document.querySelector<HTMLButtonElement>('#nav-chat')
+  
+  if (!todosBtn || !chatBtn) return
+
+  todosBtn.addEventListener('click', () => {
+    switchView('todos')
+  })
+
+  chatBtn.addEventListener('click', () => {
+    switchView('chat')
+  })
+}
+
+// Switch between views
+function switchView(view: 'todos' | 'chat'): void {
+  const todoView = document.querySelector<HTMLDivElement>('#todo-view')
+  const chatView = document.querySelector<HTMLDivElement>('#chat-view')
+  const todosBtn = document.querySelector<HTMLButtonElement>('#nav-todos')
+  const chatBtn = document.querySelector<HTMLButtonElement>('#nav-chat')
+  
+  if (!todoView || !chatView || !todosBtn || !chatBtn) return
+
+  if (view === 'todos') {
+    todoView.classList.remove('hidden')
+    chatView.classList.add('hidden')
+    todosBtn.classList.add('active')
+    chatBtn.classList.remove('active')
+  } else {
+    todoView.classList.add('hidden')
+    chatView.classList.remove('hidden')
+    todosBtn.classList.remove('active')
+    chatBtn.classList.add('active')
+    
+    // Initialize chat viewer when first switching to it
+    if (!chatView.hasAttribute('data-initialized')) {
+      initChatViewer()
+      chatView.setAttribute('data-initialized', 'true')
+    }
+  }
 }
