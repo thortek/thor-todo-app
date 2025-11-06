@@ -1,8 +1,38 @@
 import type { ChatMessage } from './chatModel'
 import { streamChatAPI } from './chatApiService'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+import hljs from 'highlight.js'
 
 let messages: ChatMessage[] = []
 let isStreaming = false
+
+// Configure marked options
+marked.setOptions({
+  breaks: true, // Convert \n to <br>
+  gfm: true, // GitHub Flavored Markdown
+})
+
+// Custom renderer for code blocks with syntax highlighting
+const renderer = new marked.Renderer()
+renderer.code = function(this: any, token: any) {
+  const code = token.text
+  const lang = token.lang
+  
+  if (lang && hljs.getLanguage(lang)) {
+    try {
+      const highlighted = hljs.highlight(code, { language: lang }).value
+      return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`
+    } catch (err) {
+      console.error('Highlight error:', err)
+    }
+  }
+  
+  // Fallback to auto-detection
+  const highlighted = hljs.highlightAuto(code).value
+  return `<pre><code class="hljs">${highlighted}</code></pre>`
+}
+marked.use({ renderer })
 
 /**
  * Initialize the chat viewer
@@ -195,7 +225,8 @@ function updateLastMessage(content: string): void {
   if (lastMessage) {
     const contentDiv = lastMessage.querySelector('.message-content')
     if (contentDiv) {
-      contentDiv.textContent = content
+      // Render markdown for assistant messages
+      contentDiv.innerHTML = renderMarkdown(content)
     }
   }
 }
@@ -206,16 +237,41 @@ function updateLastMessage(content: string): void {
 function createMessageHTML(message: ChatMessage): string {
   const isUser = message.role === 'user'
   const alignment = isUser ? 'justify-end' : 'justify-start'
-  const bgColor = isUser ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-900'
+  const bgColor = isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
   const roundedClass = isUser ? 'rounded-l-lg rounded-tr-lg' : 'rounded-r-lg rounded-tl-lg'
+  
+  // For user messages, use plain text. For assistant, render markdown
+  const contentHTML = isUser 
+    ? `<div class="message-content whitespace-pre-wrap">${escapeHtml(message.content)}</div>`
+    : `<div class="message-content markdown-body">${renderMarkdown(message.content)}</div>`
   
   return `
     <div class="flex ${alignment}">
-      <div class="${bgColor} ${roundedClass} px-4 py-2 max-w-[70%] break-words">
-        <div class="message-content whitespace-pre-wrap">${escapeHtml(message.content)}</div>
+      <div class="${bgColor} ${roundedClass} px-4 py-3 max-w-[80%] break-words">
+        ${contentHTML}
       </div>
     </div>
   `
+}
+
+/**
+ * Render markdown to sanitized HTML
+ */
+function renderMarkdown(markdown: string): string {
+  try {
+    const html = marked.parse(markdown) as string
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: [
+        'p', 'br', 'strong', 'em', 'u', 'code', 'pre', 'a', 'ul', 'ol', 'li',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr', 'table',
+        'thead', 'tbody', 'tr', 'th', 'td', 'span', 'div'
+      ],
+      ALLOWED_ATTR: ['href', 'class', 'target', 'rel']
+    })
+  } catch (err) {
+    console.error('Markdown render error:', err)
+    return escapeHtml(markdown)
+  }
 }
 
 /**
