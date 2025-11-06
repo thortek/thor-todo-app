@@ -63,7 +63,7 @@ import todoRoutes from './routes/todoRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3100
 
 // Middleware
 app.use(cors())

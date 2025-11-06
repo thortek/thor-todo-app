@@ -463,7 +463,7 @@ import categoryRoutes from './routes/categoryRoutes.js'
 import { initializeSeedData } from './models/todoStore.js'
 
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3100
 
 // Middleware
 app.use(cors()) // Enable CORS for frontend
@@ -505,7 +505,7 @@ Create a centralized service for API calls:
 ```typescript
 import type { Todo, Category, CreateTodoInput } from './todoModel'
 
-const API_BASE_URL = 'http://localhost:3000/api'
+const API_BASE_URL = 'http://localhost:3100/api'
 
 // Helper function for fetch requests
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
@@ -696,8 +696,8 @@ npm run server
 
 You should see:
 ```
-🚀 Server running on http://localhost:3000
-📋 API endpoints available at http://localhost:3000/api
+🚀 Server running on http://localhost:3100
+📋 API endpoints available at http://localhost:3100/api
 ```
 
 ### 4.2 Start the Frontend
@@ -713,12 +713,12 @@ Use a tool like Postman, Thunder Client (VS Code extension), or curl:
 
 **Get all todos:**
 ```bash
-curl http://localhost:3000/api/todos
+curl http://localhost:3100/api/todos
 ```
 
 **Create a todo:**
 ```bash
-curl -X POST http://localhost:3000/api/todos \
+curl -X POST http://localhost:3100/api/todos \
   -H "Content-Type: application/json" \
   -d '{
     "name": "New Task",
@@ -730,7 +730,7 @@ curl -X POST http://localhost:3000/api/todos \
 
 **Get all categories:**
 ```bash
-curl http://localhost:3000/api/categories
+curl http://localhost:3100/api/categories
 ```
 
 ### 4.4 Verify Frontend Integration
@@ -751,7 +751,7 @@ curl http://localhost:3000/api/categories
 **Solution:** Check that all imports use `.js` extension (TypeScript requirement for ES modules)
 
 ### Issue: Port already in use
-**Solution:** Change PORT in `server/index.ts` or kill the process using port 3000
+**Solution:** Change PORT in `server/index.ts` or kill the process using port 3100
 
 ### Issue: Frontend can't reach API
 **Solution:** Verify API_BASE_URL in `apiService.ts` matches your server's address

@@ -6,7 +6,7 @@ import chatRoutes from './routes/chatRoutes.js'
 //import { initializeSeedData } from './models/todoStore.js'
 
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3100
 
 // CORS Configuration - MUST be before routes
 app.use(cors({

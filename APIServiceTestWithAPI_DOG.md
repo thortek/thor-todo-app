@@ -11,7 +11,7 @@ npm start
 # Or from root: npm run server
 ```
 
-Your API should be available at `http://localhost:3000/api`
+Your API should be available at `http://localhost:3100/api`
 
 ### 2. Create a New Collection in APIDog
 
@@ -23,7 +23,7 @@ Create a collection called "Todo App API" to organize your tests.
 **Purpose:** Verify you can fetch all todos
 
 - **Method:** `GET`
-- **URL:** `http://localhost:3000/api/todos`
+- **URL:** `http://localhost:3100/api/todos`
 - **Headers:** None needed
 - **Body:** None
 - **Expected Response:** `200 OK` with array of todos
@@ -45,7 +45,7 @@ Create a collection called "Todo App API" to organize your tests.
 **Purpose:** Verify you can fetch all categories
 
 - **Method:** `GET`
-- **URL:** `http://localhost:3000/api/categories`
+- **URL:** `http://localhost:3100/api/categories`
 - **Headers:** None needed
 - **Body:** None
 - **Expected Response:** `200 OK` with array of categories
@@ -63,7 +63,7 @@ Create a collection called "Todo App API" to organize your tests.
 **Purpose:** Test creating a new todo
 
 - **Method:** `POST`
-- **URL:** `http://localhost:3000/api/todos`
+- **URL:** `http://localhost:3100/api/todos`
 - **Headers:** 
   - `Content-Type: application/json`
 - **Body (JSON):**
@@ -80,7 +80,7 @@ Create a collection called "Todo App API" to organize your tests.
 **Purpose:** Test updating an existing todo
 
 - **Method:** `PUT`
-- **URL:** `http://localhost:3000/api/todos/todo1` _(replace `todo1` with actual ID)_
+- **URL:** `http://localhost:3100/api/todos/todo1` _(replace `todo1` with actual ID)_
 - **Headers:**
   - `Content-Type: application/json`
 - **Body (JSON):**
@@ -96,7 +96,7 @@ Create a collection called "Todo App API" to organize your tests.
 **Purpose:** Test deleting a todo
 
 - **Method:** `DELETE`
-- **URL:** `http://localhost:3000/api/todos/todo1` _(use ID from test 3)_
+- **URL:** `http://localhost:3100/api/todos/todo1` _(use ID from test 3)_
 - **Headers:** None needed
 - **Body:** None
 - **Expected Response:** `204 No Content` (empty response)
@@ -105,7 +105,7 @@ Create a collection called "Todo App API" to organize your tests.
 **Purpose:** Test clearing all completed todos
 
 - **Method:** `DELETE`
-- **URL:** `http://localhost:3000/api/todos/completed/clear`
+- **URL:** `http://localhost:3100/api/todos/completed/clear`
 - **Headers:** None needed
 - **Body:** None
 - **Expected Response:** `200 OK`
@@ -119,7 +119,7 @@ Create a collection called "Todo App API" to organize your tests.
 **Purpose:** Test creating a new category
 
 - **Method:** `POST`
-- **URL:** `http://localhost:3000/api/categories`
+- **URL:** `http://localhost:3100/api/categories`
 - **Headers:**
   - `Content-Type: application/json`
 - **Body (JSON):**
@@ -134,7 +134,7 @@ Create a collection called "Todo App API" to organize your tests.
 **Purpose:** Test deleting a category
 
 - **Method:** `DELETE`
-- **URL:** `http://localhost:3000/api/categories/cat2` _(use ID from test 7)_
+- **URL:** `http://localhost:3100/api/categories/cat2` _(use ID from test 7)_
 - **Headers:** None needed
 - **Body:** None
 - **Expected Response:** `204 No Content`
@@ -159,7 +159,7 @@ Create a collection called "Todo App API" to organize your tests.
 ### 1. **Use Environment Variables**
 Set up a variable for your base URL:
 - Variable name: `BASE_URL`
-- Value: `http://localhost:3000/api`
+- Value: `http://localhost:3100/api`
 - Then use: `{{BASE_URL}}/todos`
 
 ### 2. **Save Response IDs**
@@ -196,7 +196,7 @@ Don't forget to test failures:
 
 ## Quick Start Checklist
 
-✅ Server running on port 3000  
+✅ Server running on port 3100  
 ✅ Create "Todo App API" collection in APIDog  
 ✅ Test GET endpoints first (read-only, safe)  
 ✅ Test POST to create data  

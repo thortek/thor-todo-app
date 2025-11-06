@@ -1,6 +1,6 @@
 import type { ChatMessage, StreamChunk } from './chatModel'
 
-const API_BASE_URL = 'http://localhost:3000/api'
+const API_BASE_URL = 'http://localhost:3100/api'
 
 /**
  * Stream chat completion from the API

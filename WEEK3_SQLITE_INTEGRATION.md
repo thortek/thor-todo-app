@@ -108,8 +108,8 @@ npm run server
 
 **Expected output:**
 ```
-🚀 Server running on http://localhost:3000
-📋 API endpoints available at http://localhost:3000/api
+🚀 Server running on http://localhost:3100
+📋 API endpoints available at http://localhost:3100/api
 Initializing seed data...
 ✔ Seed data initialized successfully
 ```
@@ -154,13 +154,13 @@ Create a `test.http` file:
 
 ```http
 ### Get all categories
-GET http://localhost:3000/api/categories
+GET http://localhost:3100/api/categories
 
 ### Get all todos
-GET http://localhost:3000/api/todos
+GET http://localhost:3100/api/todos
 
 ### Create a new category
-POST http://localhost:3000/api/categories
+POST http://localhost:3100/api/categories
 Content-Type: application/json
 
 {
@@ -168,7 +168,7 @@ Content-Type: application/json
 }
 
 ### Create a new todo
-POST http://localhost:3000/api/todos
+POST http://localhost:3100/api/todos
 Content-Type: application/json
 
 {
@@ -179,7 +179,7 @@ Content-Type: application/json
 }
 
 ### Update a todo
-PUT http://localhost:3000/api/todos/PASTE_TODO_ID_HERE
+PUT http://localhost:3100/api/todos/PASTE_TODO_ID_HERE
 Content-Type: application/json
 
 {
@@ -187,7 +187,7 @@ Content-Type: application/json
 }
 
 ### Delete a todo
-DELETE http://localhost:3000/api/todos/PASTE_TODO_ID_HERE
+DELETE http://localhost:3100/api/todos/PASTE_TODO_ID_HERE
 ```
 
 ### 6.2 Verify Persistence
@@ -290,7 +290,7 @@ Create a template for other developers:
 ```bash
 # .env.example
 DATABASE_URL="file:./dev.db"
-PORT=3000
+PORT=3100
 ```
 
 ### 8.2 Development vs Production

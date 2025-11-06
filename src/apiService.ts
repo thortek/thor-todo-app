@@ -1,6 +1,6 @@
 import type { Todo, Category, CreateTodoInput } from './todoModel'
 
-const API_BASE_URL = 'http://localhost:3000/api'
+const API_BASE_URL = 'http://localhost:3100/api'
 
 // Helper function for fetch requests
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
