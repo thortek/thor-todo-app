@@ -10,6 +10,7 @@ import {
 } from "./todoModel"
 import { initTodoViewer, renderTodoList } from "./todoViewer"
 import { initChatViewer } from "./chatViewer"
+import { initVisionViewer } from "./visionViewer"
 import {
   showAlertModal,
   showConfirmModal,
@@ -52,6 +53,9 @@ function setupUI(): void {
             </button>
             <button id="nav-chat" class="nav-tab px-4 py-2 rounded-lg font-medium transition-colors">
               💬 AI Chat
+            </button>
+            <button id="nav-vision" class="nav-tab px-4 py-2 rounded-lg font-medium transition-colors">
+              🔍 Image Analysis
             </button>
           </div>
         </header>
@@ -99,6 +103,11 @@ function setupUI(): void {
         <!-- Chat View (hidden by default) -->
         <div id="chat-view" class="view-container hidden">
           <div id="chat-container"></div>
+        </div>
+
+        <!-- Vision View (hidden by default) -->
+        <div id="vision-view" class="view-container hidden">
+          <div id="vision-container"></div>
         </div>
       </div>
     </div>
@@ -350,8 +359,9 @@ async function updateCategoriesDropdown(): Promise<void> {
 function setupNavigation(): void {
   const todosBtn = document.querySelector<HTMLButtonElement>('#nav-todos')
   const chatBtn = document.querySelector<HTMLButtonElement>('#nav-chat')
+  const visionBtn = document.querySelector<HTMLButtonElement>('#nav-vision')
   
-  if (!todosBtn || !chatBtn) return
+  if (!todosBtn || !chatBtn || !visionBtn) return
 
   todosBtn.addEventListener('click', () => {
     switchView('todos')
@@ -360,32 +370,54 @@ function setupNavigation(): void {
   chatBtn.addEventListener('click', () => {
     switchView('chat')
   })
+
+  visionBtn.addEventListener('click', () => {
+    switchView('vision')
+  })
 }
 
 // Switch between views
-function switchView(view: 'todos' | 'chat'): void {
+function switchView(view: 'todos' | 'chat' | 'vision'): void {
   const todoView = document.querySelector<HTMLDivElement>('#todo-view')
   const chatView = document.querySelector<HTMLDivElement>('#chat-view')
+  const visionView = document.querySelector<HTMLDivElement>('#vision-view')
   const todosBtn = document.querySelector<HTMLButtonElement>('#nav-todos')
   const chatBtn = document.querySelector<HTMLButtonElement>('#nav-chat')
+  const visionBtn = document.querySelector<HTMLButtonElement>('#nav-vision')
   
-  if (!todoView || !chatView || !todosBtn || !chatBtn) return
+  if (!todoView || !chatView || !visionView || !todosBtn || !chatBtn || !visionBtn) return
 
+  // Hide all views
+  todoView.classList.add('hidden')
+  chatView.classList.add('hidden')
+  visionView.classList.add('hidden')
+  
+  // Deactivate all buttons
+  todosBtn.classList.remove('active')
+  chatBtn.classList.remove('active')
+  visionBtn.classList.remove('active')
+
+  // Show selected view and activate button
   if (view === 'todos') {
     todoView.classList.remove('hidden')
-    chatView.classList.add('hidden')
     todosBtn.classList.add('active')
-    chatBtn.classList.remove('active')
-  } else {
-    todoView.classList.add('hidden')
+  } else if (view === 'chat') {
     chatView.classList.remove('hidden')
-    todosBtn.classList.remove('active')
     chatBtn.classList.add('active')
     
     // Initialize chat viewer when first switching to it
     if (!chatView.hasAttribute('data-initialized')) {
       initChatViewer()
       chatView.setAttribute('data-initialized', 'true')
+    }
+  } else if (view === 'vision') {
+    visionView.classList.remove('hidden')
+    visionBtn.classList.add('active')
+    
+    // Initialize vision viewer when first switching to it
+    if (!visionView.hasAttribute('data-initialized')) {
+      initVisionViewer()
+      visionView.setAttribute('data-initialized', 'true')
     }
   }
 }

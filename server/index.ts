@@ -3,6 +3,7 @@ import cors from 'cors'
 import todoRoutes from './routes/todoRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import chatRoutes from './routes/chatRoutes.js'
+import visionRoutes from './routes/visionRoutes.js'
 //import { initializeSeedData } from './models/todoStore.js'
 
 const app = express()
@@ -16,9 +17,9 @@ app.use(cors({
   credentials: true
 }))
 
-
-//Middleware
-app.use(express.json()) // Parse JSON bodies
+// Body parsing middleware with increased limits for image uploads
+app.use(express.json({ limit: '50mb' })) // Increased from default 100kb
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
 // Initialize seed data
 //initializeSeedData()
@@ -27,6 +28,7 @@ app.use(express.json()) // Parse JSON bodies
 app.use('/api/todos', todoRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/chat', chatRoutes)
+app.use('/api/vision', visionRoutes)
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
