@@ -11,6 +11,7 @@ import {
 import { initTodoViewer, renderTodoList } from "./todoViewer"
 import { initChatViewer } from "./chatViewer"
 import { initVisionViewer } from "./visionViewer"
+import { ImageGenViewer } from "./imageGenViewer"
 import {
   showAlertModal,
   showConfirmModal,
@@ -56,6 +57,9 @@ function setupUI(): void {
             </button>
             <button id="nav-vision" class="nav-tab px-4 py-2 rounded-lg font-medium transition-colors">
               🔍 Image Analysis
+            </button>
+            <button id="nav-imagegen" class="nav-tab px-4 py-2 rounded-lg font-medium transition-colors">
+              🎨 Image Generation
             </button>
           </div>
         </header>
@@ -108,6 +112,11 @@ function setupUI(): void {
         <!-- Vision View (hidden by default) -->
         <div id="vision-view" class="view-container hidden">
           <div id="vision-container"></div>
+        </div>
+
+        <!-- Image Generation View (hidden by default) -->
+        <div id="imagegen-view" class="view-container hidden">
+          <div id="imagegen-container"></div>
         </div>
       </div>
     </div>
@@ -360,8 +369,9 @@ function setupNavigation(): void {
   const todosBtn = document.querySelector<HTMLButtonElement>('#nav-todos')
   const chatBtn = document.querySelector<HTMLButtonElement>('#nav-chat')
   const visionBtn = document.querySelector<HTMLButtonElement>('#nav-vision')
+  const imagegenBtn = document.querySelector<HTMLButtonElement>('#nav-imagegen')
   
-  if (!todosBtn || !chatBtn || !visionBtn) return
+  if (!todosBtn || !chatBtn || !visionBtn || !imagegenBtn) return
 
   todosBtn.addEventListener('click', () => {
     switchView('todos')
@@ -374,28 +384,36 @@ function setupNavigation(): void {
   visionBtn.addEventListener('click', () => {
     switchView('vision')
   })
+
+  imagegenBtn.addEventListener('click', () => {
+    switchView('imagegen')
+  })
 }
 
 // Switch between views
-function switchView(view: 'todos' | 'chat' | 'vision'): void {
+function switchView(view: 'todos' | 'chat' | 'vision' | 'imagegen'): void {
   const todoView = document.querySelector<HTMLDivElement>('#todo-view')
   const chatView = document.querySelector<HTMLDivElement>('#chat-view')
   const visionView = document.querySelector<HTMLDivElement>('#vision-view')
+  const imagegenView = document.querySelector<HTMLDivElement>('#imagegen-view')
   const todosBtn = document.querySelector<HTMLButtonElement>('#nav-todos')
   const chatBtn = document.querySelector<HTMLButtonElement>('#nav-chat')
   const visionBtn = document.querySelector<HTMLButtonElement>('#nav-vision')
+  const imagegenBtn = document.querySelector<HTMLButtonElement>('#nav-imagegen')
   
-  if (!todoView || !chatView || !visionView || !todosBtn || !chatBtn || !visionBtn) return
+  if (!todoView || !chatView || !visionView || !imagegenView || !todosBtn || !chatBtn || !visionBtn || !imagegenBtn) return
 
   // Hide all views
   todoView.classList.add('hidden')
   chatView.classList.add('hidden')
   visionView.classList.add('hidden')
+  imagegenView.classList.add('hidden')
   
   // Deactivate all buttons
   todosBtn.classList.remove('active')
   chatBtn.classList.remove('active')
   visionBtn.classList.remove('active')
+  imagegenBtn.classList.remove('active')
 
   // Show selected view and activate button
   if (view === 'todos') {
@@ -418,6 +436,15 @@ function switchView(view: 'todos' | 'chat' | 'vision'): void {
     if (!visionView.hasAttribute('data-initialized')) {
       initVisionViewer()
       visionView.setAttribute('data-initialized', 'true')
+    }
+  } else if (view === 'imagegen') {
+    imagegenView.classList.remove('hidden')
+    imagegenBtn.classList.add('active')
+    
+    // Initialize image generation viewer when first switching to it
+    if (!imagegenView.hasAttribute('data-initialized')) {
+      new ImageGenViewer('imagegen-container')
+      imagegenView.setAttribute('data-initialized', 'true')
     }
   }
 }

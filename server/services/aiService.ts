@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import Replicate from 'replicate'
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -7,6 +8,11 @@ dotenv.config()
 const openai = new OpenAI({
   baseURL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1',
   apiKey: 'ollama', // Ollama doesn't require a real API key
+})
+
+// Initialize Replicate client for image generation
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
 })
 
 export interface ChatMessage {
@@ -142,5 +148,105 @@ export async function* analyzeImageStream(
   } catch (error) {
     console.error('Error in analyzeImageStream:', error)
     throw new Error('Failed to stream image analysis')
+  }
+}
+
+export interface ImageGenerationOptions {
+  prompt: string
+  model?: string
+  width?: number
+  height?: number
+  numOutputs?: number
+  numInferenceSteps?: number
+  guidanceScale?: number
+  seed?: number
+}
+
+/**
+ * Generate an image using Flux-Schnell model via Replicate
+ * @param options - Image generation parameters
+ * @returns URL of the generated image
+ */
+export async function generateImage(
+  options: ImageGenerationOptions
+): Promise<string[]> {
+  try {
+    const {
+      prompt,
+      model = 'flux-schnell',
+      width = 1024,
+      height = 1024,
+      numOutputs = 1,
+      numInferenceSteps = 4,
+      guidanceScale = 3.5,
+      seed
+    } = options
+
+    // Map model names to Replicate model identifiers
+    const modelMap: { [key: string]: string } = {
+      'flux-schnell': 'black-forest-labs/flux-schnell',
+      'flux-dev': 'black-forest-labs/flux-dev',
+      'flux-1.1-pro': 'black-forest-labs/flux-1.1-pro'
+    }
+
+    const replicateModel = modelMap[model] || modelMap['flux-schnell']
+
+    // Calculate aspect ratio from width and height
+    // Flux-Schnell supports: 1:1, 16:9, 21:9, 3:2, 2:3, 4:5, 5:4, 3:4, 4:3, 9:16, 9:21
+    let aspectRatio = '1:1'
+    if (width && height) {
+      const ratio = width / height
+      if (Math.abs(ratio - 1) < 0.1) aspectRatio = '1:1'
+      else if (Math.abs(ratio - 16/9) < 0.1) aspectRatio = '16:9'
+      else if (Math.abs(ratio - 21/9) < 0.1) aspectRatio = '21:9'
+      else if (Math.abs(ratio - 3/2) < 0.1) aspectRatio = '3:2'
+      else if (Math.abs(ratio - 2/3) < 0.1) aspectRatio = '2:3'
+      else if (Math.abs(ratio - 4/5) < 0.1) aspectRatio = '4:5'
+      else if (Math.abs(ratio - 5/4) < 0.1) aspectRatio = '5:4'
+      else if (Math.abs(ratio - 3/4) < 0.1) aspectRatio = '3:4'
+      else if (Math.abs(ratio - 4/3) < 0.1) aspectRatio = '4:3'
+      else if (Math.abs(ratio - 9/16) < 0.1) aspectRatio = '9:16'
+      else if (Math.abs(ratio - 9/21) < 0.1) aspectRatio = '9:21'
+    }
+
+    const input: any = {
+      prompt,
+      aspect_ratio: aspectRatio,
+      num_outputs: numOutputs,
+      num_inference_steps: numInferenceSteps,
+      go_fast: true,
+      guidance: guidanceScale,
+      output_format: 'png',
+      output_quality: 80,
+      disable_safety_checker: false
+    }
+
+    if (seed !== undefined) {
+      input.seed = seed
+    }
+
+    console.log(`Generating image with model: ${replicateModel}`)
+    console.log(`Aspect ratio: ${aspectRatio}, Steps: ${numInferenceSteps}, Guidance: ${guidanceScale}`)
+
+    const output = await replicate.run(
+      replicateModel as `${string}/${string}`,
+      { input }
+    )
+
+    // Replicate returns an array of FileOutput objects or strings
+    // Ensure we return an array of URL strings
+    if (Array.isArray(output)) {
+      return output.map(item => 
+        typeof item === 'string' ? item : item.toString()
+      )
+    } else if (output) {
+      // Single output case
+      return [typeof output === 'string' ? output : output.toString()]
+    }
+    
+    throw new Error('No output received from Replicate')
+  } catch (error) {
+    console.error('Error in generateImage:', error)
+    throw new Error('Failed to generate image')
   }
 }

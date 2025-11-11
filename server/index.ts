@@ -4,6 +4,7 @@ import todoRoutes from './routes/todoRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import chatRoutes from './routes/chatRoutes.js'
 import visionRoutes from './routes/visionRoutes.js'
+import imageGenRoutes from './routes/imageGenRoutes.js'
 //import { initializeSeedData } from './models/todoStore.js'
 
 const app = express()
@@ -29,6 +30,7 @@ app.use('/api/todos', todoRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/chat', chatRoutes)
 app.use('/api/vision', visionRoutes)
+app.use('/api/image-gen', imageGenRoutes)
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
