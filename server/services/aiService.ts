@@ -182,6 +182,11 @@ export async function generateImage(
       seed
     } = options
 
+    const allowMultipleOutputs = model === 'flux-schnell'
+    const outputsToRequest = allowMultipleOutputs
+      ? Math.min(Math.max(numOutputs ?? 1, 1), 4)
+      : 1
+
     // Map model names to Replicate model identifiers
     const modelMap: { [key: string]: string } = {
       'flux-schnell': 'black-forest-labs/flux-schnell',
@@ -212,9 +217,9 @@ export async function generateImage(
     const input: any = {
       prompt,
       aspect_ratio: aspectRatio,
-      num_outputs: numOutputs,
+      num_outputs: outputsToRequest,
       num_inference_steps: numInferenceSteps,
-      go_fast: true,
+      go_fast: model === 'flux-schnell',
       guidance: guidanceScale,
       output_format: 'png',
       output_quality: 80,
@@ -225,8 +230,8 @@ export async function generateImage(
       input.seed = seed
     }
 
-    console.log(`Generating image with model: ${replicateModel}`)
-    console.log(`Aspect ratio: ${aspectRatio}, Steps: ${numInferenceSteps}, Guidance: ${guidanceScale}`)
+  console.log(`Generating image with model: ${replicateModel}`)
+  console.log(`Outputs: ${outputsToRequest}, Aspect ratio: ${aspectRatio}, Steps: ${numInferenceSteps}, Guidance: ${guidanceScale}`)
 
     const output = await replicate.run(
       replicateModel as `${string}/${string}`,

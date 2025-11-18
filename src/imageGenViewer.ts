@@ -10,6 +10,8 @@ export class ImageGenViewer {
   private promptInput!: HTMLTextAreaElement
   private generateBtn!: HTMLButtonElement
   private modelSelect!: HTMLSelectElement
+  private outputCountGroup!: HTMLDivElement
+  private outputCountSelect!: HTMLSelectElement
   private aspectRatioSelect!: HTMLSelectElement
   private stepsInput!: HTMLInputElement
   private guidanceInput!: HTMLInputElement
@@ -17,6 +19,10 @@ export class ImageGenViewer {
   private imageDisplay!: HTMLDivElement
   private statusDiv!: HTMLDivElement
   private isGenerating: boolean = false
+  private generatedImages: string[] = []
+  private selectedImageElement?: HTMLImageElement
+  private thumbnailButtons: HTMLButtonElement[] = []
+  private openSelectedLink?: HTMLAnchorElement
 
   constructor(containerId: string) {
     const container = document.getElementById(containerId)
@@ -62,6 +68,22 @@ export class ImageGenViewer {
             </select>
             <p class="text-xs text-gray-500 mt-1">
               💡 Schnell: Quick iterations • Dev: Production ready • Pro: Maximum detail
+            </p>
+          </div>
+
+          <!-- Output Count (Flux Schnell only) -->
+          <div class="form-group mb-4" id="output-count-group">
+            <label for="output-count-select" class="block text-sm font-medium text-gray-700 mb-2">
+              Images to Generate (Flux Schnell)
+            </label>
+            <select id="output-count-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+              <option value="1" selected>1 image (default)</option>
+              <option value="2">2 images</option>
+              <option value="3">3 images</option>
+              <option value="4">4 images</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">
+              Available when Flux Schnell is selected. Choose multiple images to compare and pick your favorite.
             </p>
           </div>
 
@@ -153,6 +175,8 @@ export class ImageGenViewer {
     this.promptInput = this.container.querySelector('#prompt-input')!
     this.generateBtn = this.container.querySelector('#generate-btn')!
     this.modelSelect = this.container.querySelector('#model-select')!
+  this.outputCountGroup = this.container.querySelector('#output-count-group')!
+  this.outputCountSelect = this.container.querySelector('#output-count-select')!
     this.aspectRatioSelect = this.container.querySelector('#aspect-ratio-select')!
     this.stepsInput = this.container.querySelector('#steps-input')!
     this.guidanceInput = this.container.querySelector('#guidance-input')!
@@ -163,6 +187,8 @@ export class ImageGenViewer {
 
   private attachEventListeners(): void {
     this.generateBtn.addEventListener('click', () => this.handleGenerate())
+    this.modelSelect.addEventListener('change', () => this.handleModelChange())
+    this.handleModelChange()
     
     // Allow Enter+Shift to generate (Enter alone for new line)
     this.promptInput.addEventListener('keydown', (e) => {
@@ -171,6 +197,15 @@ export class ImageGenViewer {
         this.handleGenerate()
       }
     })
+  }
+
+  private handleModelChange(): void {
+    const isFluxSchnell = this.modelSelect.value === 'flux-schnell'
+    this.outputCountGroup.classList.toggle('hidden', !isFluxSchnell)
+    this.outputCountSelect.disabled = !isFluxSchnell
+    if (!isFluxSchnell) {
+      this.outputCountSelect.value = '1'
+    }
   }
 
   private async handleGenerate(): Promise<void> {
@@ -198,6 +233,7 @@ export class ImageGenViewer {
     this.generateBtn.textContent = '⏳ Generating...'
     this.showStatus(`Generating with ${modelName}... This may take 30-90 seconds.`, 'info')
     this.imageDisplay.innerHTML = ''
+    this.generatedImages = []
 
     try {
       // Parse aspect ratio to get width and height
@@ -223,11 +259,17 @@ export class ImageGenViewer {
         height = baseSize
       }
 
+      const rawOutputs = parseInt(this.outputCountSelect.value, 10)
+      const requestedOutputs = this.modelSelect.value === 'flux-schnell'
+        ? Math.min(Math.max(Number.isFinite(rawOutputs) ? rawOutputs : 1, 1), 4)
+        : 1
+
       const request: ImageGenerationRequest = {
         prompt,
         model: this.modelSelect.value,
         width,
         height,
+        numOutputs: requestedOutputs,
         numInferenceSteps: parseInt(this.stepsInput.value),
         guidanceScale: parseFloat(this.guidanceInput.value),
       }
@@ -260,22 +302,86 @@ export class ImageGenViewer {
   }
 
   private displayImages(imageUrls: string[], prompt: string): void {
+  this.generatedImages = imageUrls
+
+    const headerLabel = imageUrls.length > 1 ? 'Generated Images' : 'Generated Image'
+    const thumbnails = imageUrls
+      .map((url, index) => `
+        <button
+          type="button"
+          class="thumbnail-button ${index === 0 ? 'selected' : ''}"
+          data-index="${index}"
+          aria-pressed="${index === 0}"
+          aria-label="Select image ${index + 1}"
+        >
+          <img src="${url}" alt="Generated image ${index + 1}" class="thumbnail-image" />
+        </button>
+      `)
+      .join('')
+
     this.imageDisplay.innerHTML = `
       <div class="generated-images">
-        <h3 class="text-lg font-semibold mb-3">Generated Image</h3>
-        <p class="text-sm text-gray-600 mb-4"><strong>Prompt:</strong> ${this.escapeHtml(prompt)}</p>
-        ${imageUrls.map(url => `
-          <div class="image-wrapper mb-4">
-            <img src="${url}" alt="Generated image" class="generated-image rounded-lg shadow-lg" />
-            <div class="image-actions mt-2">
-              <a href="${url}" target="_blank" class="text-blue-600 hover:underline text-sm">
-                Open in new tab
-              </a>
-            </div>
-          </div>
-        `).join('')}
+        <div class="generated-images-header">
+          <h3 class="text-lg font-semibold">${headerLabel} (${imageUrls.length})</h3>
+          <p class="text-sm text-gray-600">
+            <strong>Prompt:</strong> ${this.escapeHtml(prompt)}
+          </p>
+        </div>
+        <div class="selected-image-wrapper mb-4">
+          <img src="${imageUrls[0]}" alt="Selected generated image" class="generated-image selected-image" />
+        </div>
+        <p class="text-xs text-gray-500 mb-3">Click a thumbnail to view it full size.</p>
+        <div class="thumbnail-grid">
+          ${thumbnails}
+        </div>
+        <div class="image-actions mt-4">
+          <a
+            href="${imageUrls[0]}"
+            data-selected-link
+            target="_blank"
+            class="text-blue-600 hover:underline text-sm"
+          >
+            Open selected in new tab
+          </a>
+        </div>
       </div>
     `
+
+    this.selectedImageElement = this.imageDisplay.querySelector('.selected-image') as HTMLImageElement | undefined
+    this.openSelectedLink = this.imageDisplay.querySelector('[data-selected-link]') as HTMLAnchorElement | undefined
+    this.thumbnailButtons = Array.from(this.imageDisplay.querySelectorAll<HTMLButtonElement>('.thumbnail-button'))
+
+    this.thumbnailButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const index = parseInt(button.dataset.index ?? '0', 10)
+        if (Number.isFinite(index)) {
+          this.updateSelectedImage(index)
+        }
+      })
+    })
+  }
+
+  private updateSelectedImage(index: number): void {
+    if (!this.generatedImages[index]) {
+      return
+    }
+
+    const selectedUrl = this.generatedImages[index]
+
+    if (this.selectedImageElement) {
+      this.selectedImageElement.src = selectedUrl
+      this.selectedImageElement.alt = `Selected generated image ${index + 1}`
+    }
+
+    this.thumbnailButtons.forEach((button, idx) => {
+      const isActive = idx === index
+      button.classList.toggle('selected', isActive)
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false')
+    })
+
+    if (this.openSelectedLink) {
+      this.openSelectedLink.href = selectedUrl
+    }
   }
 
   private showStatus(message: string, type: 'info' | 'success' | 'error'): void {

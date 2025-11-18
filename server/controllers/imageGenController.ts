@@ -27,16 +27,26 @@ export async function generateImageHandler(
       return
     }
 
+    const selectedModel = typeof model === 'string' ? model : 'flux-schnell'
+    const rawOutputs = typeof numOutputs === 'number'
+      ? numOutputs
+      : typeof numOutputs === 'string'
+        ? parseInt(numOutputs, 10)
+        : 1
+    const sanitizedOutputs = selectedModel === 'flux-schnell'
+      ? Math.min(Math.max(rawOutputs || 1, 1), 4)
+      : 1
+
     // Set headers for JSON response
     res.setHeader('Content-Type', 'application/json')
     
     // Generate the image(s)
     const imageUrls = await generateImage({
       prompt,
-      model,
+      model: selectedModel,
       width,
       height,
-      numOutputs,
+      numOutputs: sanitizedOutputs,
       numInferenceSteps,
       guidanceScale,
       seed
