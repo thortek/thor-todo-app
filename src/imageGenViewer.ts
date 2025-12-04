@@ -64,10 +64,11 @@ export class ImageGenViewer {
             <select id="model-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
               <option value="flux-schnell" selected>Flux Schnell (Fastest - 1-4 steps, free)</option>
               <option value="flux-dev">Flux Dev (Balanced - Higher quality, more steps)</option>
-              <option value="flux-1.1-pro">Flux 1.1 Pro (Best Quality - Slowest, premium)</option>
+              <option value="flux-1.1-pro">Flux 1.1 Pro (Best Quality - Slower, premium)</option>
+              <option value="flux-2-pro">Flux 2 Pro (Latest - Best text rendering, premium)</option>
             </select>
             <p class="text-xs text-gray-500 mt-1">
-              💡 Schnell: Quick iterations • Dev: Production ready • Pro: Maximum detail
+              💡 Schnell: Quick iterations • Dev: Production ready • Pro: Maximum detail • 2 Pro: Best text & photorealism
             </p>
           </div>
 
@@ -224,7 +225,8 @@ export class ImageGenViewer {
     const modelNames: { [key: string]: string } = {
       'flux-schnell': 'Flux Schnell',
       'flux-dev': 'Flux Dev',
-      'flux-1.1-pro': 'Flux 1.1 Pro'
+      'flux-1.1-pro': 'Flux 1.1 Pro',
+      'flux-2-pro': 'Flux 2 Pro'
     }
     const modelName = modelNames[selectedModel] || 'Flux'
 

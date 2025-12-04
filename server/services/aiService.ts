@@ -191,7 +191,8 @@ export async function generateImage(
     const modelMap: { [key: string]: string } = {
       'flux-schnell': 'black-forest-labs/flux-schnell',
       'flux-dev': 'black-forest-labs/flux-dev',
-      'flux-1.1-pro': 'black-forest-labs/flux-1.1-pro'
+      'flux-1.1-pro': 'black-forest-labs/flux-1.1-pro',
+      'flux-2-pro': 'black-forest-labs/flux-2-pro'
     }
 
     const replicateModel = modelMap[model] || modelMap['flux-schnell']
@@ -214,24 +215,37 @@ export async function generateImage(
       else if (Math.abs(ratio - 9/21) < 0.1) aspectRatio = '9:21'
     }
 
-    const input: any = {
-      prompt,
-      aspect_ratio: aspectRatio,
-      num_outputs: outputsToRequest,
-      num_inference_steps: numInferenceSteps,
-      go_fast: model === 'flux-schnell',
-      guidance: guidanceScale,
-      output_format: 'png',
-      output_quality: 80,
-      disable_safety_checker: false
-    }
-
-    if (seed !== undefined) {
-      input.seed = seed
+    // Flux 2 Pro has different parameters than other Flux models
+    let input: any
+    if (model === 'flux-2-pro') {
+      input = {
+        prompt,
+        aspect_ratio: aspectRatio,
+        output_format: 'png',
+        safety_tolerance: 2
+      }
+      if (seed !== undefined) {
+        input.seed = seed
+      }
+    } else {
+      input = {
+        prompt,
+        aspect_ratio: aspectRatio,
+        num_outputs: outputsToRequest,
+        num_inference_steps: numInferenceSteps,
+        go_fast: model === 'flux-schnell',
+        guidance: guidanceScale,
+        output_format: 'png',
+        output_quality: 80,
+        disable_safety_checker: false
+      }
+      if (seed !== undefined) {
+        input.seed = seed
+      }
     }
 
   console.log(`Generating image with model: ${replicateModel}`)
-  console.log(`Outputs: ${outputsToRequest}, Aspect ratio: ${aspectRatio}, Steps: ${numInferenceSteps}, Guidance: ${guidanceScale}`)
+  console.log(`Input params:`, JSON.stringify(input, null, 2))
 
     const output = await replicate.run(
       replicateModel as `${string}/${string}`,
